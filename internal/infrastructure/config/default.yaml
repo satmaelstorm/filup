@@ -1,0 +1,34 @@
+http:
+  port: 8080
+  timeout: 30
+logs:
+  trace:
+    prefix: TRACE
+  debug:
+    prefix: DEBUG
+  error:
+    prefix: ERROR
+    metricsOpts:
+      name: error
+  critical:
+    prefix: CRITICAL
+    metricsOpts:
+      name: critical
+  STD:
+    prefix: STD
+storage:
+  endpoint: localhost:9000
+  useSSL: false
+  region: eu-central-1
+  maxLifeTime: 60
+  credentials:
+    key: minio
+    secret: minio123
+uploader:
+  copyHeaders:
+    - Content-Type
+  maxFileLength: 52428800 #50Mb
+queue:
+  type: "nats"
+  uri: "nats://localhost:4222"
+  maxLifeTime: 5
