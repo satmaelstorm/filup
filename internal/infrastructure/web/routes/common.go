@@ -8,8 +8,3 @@ const (
 	FinishUpload = Upload + "/finish"
 	UploadPart   = Upload + "/part"
 )
-
-const (
-	methodGET  = "GET"
-	methodPOST = "POST"
-)

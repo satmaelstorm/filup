@@ -77,7 +77,6 @@ func InitLogger(project string, configs LogConfigs) (Loggers, error) {
 	}
 
 	return loggers, nil
-
 }
 
 func initLogger(p string, c LogConfig) (*log.Logger, error) {

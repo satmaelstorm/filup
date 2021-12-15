@@ -21,6 +21,10 @@ storage:
   useSSL: false
   region: eu-central-1
   maxLifeTime: 60
+  buckets:
+    meta: "filup_meta"
+    parts: "filup_parts"
+    final: "filup"
   credentials:
     key: minio
     secret: minio123

@@ -1,35 +1,75 @@
 package routes
 
 import (
-	"github.com/gorilla/mux"
+	"github.com/fasthttp/router"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/satmaelstorm/filup/internal/infrastructure/config"
 	"github.com/satmaelstorm/filup/internal/infrastructure/logs/logsEngine"
-	"net/http"
+	"github.com/satmaelstorm/filup/internal/infrastructure/metrics"
+	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/fasthttpadaptor"
+	"github.com/valyala/fasthttp/pprofhandler"
 	"runtime/debug"
+	"strconv"
+	"time"
 )
 
-func ProvideRoutes(logger logsEngine.Loggers) *mux.Router {
-	r := mux.NewRouter()
-	s := r.PathPrefix("/").Subrouter()
+var (
+	requestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: config.ProjectMetricsNamespace,
+		Subsystem: "webserver",
+		Name:      "request_duration",
+		Buckets:   metrics.StdHttpBuckets,
+	}, []string{"path", "code"})
+	requestCount = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: config.ProjectMetricsNamespace,
+		Subsystem: "webserver",
+		Name:      "request_count",
+	}, []string{"code"})
+)
 
-	s.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			defer func() {
-				if err := recover(); err != nil {
-					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-					logger.Critical().Printf("%s : %s\n", err, string(debug.Stack()))
-				}
-			}()
-			next.ServeHTTP(w, req)
-		})
+func ProvideRoutes(logger logsEngine.Loggers) *router.Router {
+	prometheus.MustRegister(requestCount, requestDuration)
+	r := router.New()
+
+	r.PanicHandler = func(ctx *fasthttp.RequestCtx, i interface{}) {
+		ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+		ctx.Response.SetBodyString("Internal server error")
+		requestCount.WithLabelValues(strconv.Itoa(fasthttp.StatusInternalServerError)).Inc()
+		logger.Critical().Printf("%s : %s\n", i, string(debug.Stack()))
+	}
+	r.GET("/debug/pprof/{ep:*}", pprofhandler.PprofHandler)
+	r.GET(Metrics, fasthttpadaptor.NewFastHTTPHandler(promhttp.Handler()))
+
+	innerHandler := getDomainRouter().Handler
+
+	r.ANY("/{path:*}", func(ctx *fasthttp.RequestCtx) {
+		timeStart := time.Now()
+
+		innerHandler(ctx)
+
+		timeElapsed := time.Since(timeStart)
+		c := ctx.Response.StatusCode()
+		code := strconv.Itoa(c)
+		requestCount.WithLabelValues(code).Inc()
+		if c != fasthttp.StatusNotFound &&
+			c != fasthttp.StatusMethodNotAllowed &&
+			c != fasthttp.StatusForbidden &&
+			c != fasthttp.StatusUnauthorized &&
+			c != fasthttp.StatusNotAcceptable {
+			requestDuration.WithLabelValues(ctx.UserValue("path").(string), code).Observe(timeElapsed.Seconds())
+		}
 	})
 
-	s.HandleFunc(Upload, func(writer http.ResponseWriter, request *http.Request) {
-		_ = request.ParseMultipartForm(1024 * 1024 * 100)
-		_ = request.Form
-		defer request.Body.Close()
-	}).Methods(methodPOST)
-	s.HandleFunc(Metrics, promhttp.Handler().ServeHTTP).Methods(methodGET)
+	return r
+}
+
+func getDomainRouter() *router.Router {
+	r := router.New()
+	r.GET("/upload", func(ctx *fasthttp.RequestCtx) {
+		ctx.Response.SetBodyString("upload api")
+	})
 
 	return r
 }

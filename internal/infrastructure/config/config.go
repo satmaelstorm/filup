@@ -39,15 +39,22 @@ type StorageCredentials struct {
 }
 
 type Storage struct {
-	Endpoint    string
 	UseSSL      bool
-	Region      string
 	MaxLifeTime int
 	Credentials StorageCredentials
+	Buckets     StorageBuckets
+	Endpoint    string
+	Region      string
 }
 
 func (s *Storage) GetTimeout() time.Duration {
 	return time.Duration(s.MaxLifeTime) * time.Second
+}
+
+type StorageBuckets struct {
+	Parts string
+	Final string
+	Meta  string
 }
 
 type QueueEngine struct {

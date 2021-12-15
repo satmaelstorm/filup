@@ -7,8 +7,8 @@
 package di
 
 import (
+	"github.com/satmaelstorm/filup/internal/infrastructure/appctx"
 	"github.com/satmaelstorm/filup/internal/infrastructure/config"
-	"github.com/satmaelstorm/filup/internal/infrastructure/ctx"
 	"github.com/satmaelstorm/filup/internal/infrastructure/logs"
 	"github.com/satmaelstorm/filup/internal/infrastructure/web"
 	"github.com/satmaelstorm/filup/internal/infrastructure/web/routes"
@@ -17,7 +17,7 @@ import (
 // Injectors from wire.go:
 
 func InitWebServer() *web.Server {
-	coreContext := ctx.ProvideContext()
+	coreContext := appctx.ProvideContext()
 	configuration := config.ProvideConfig()
 	loggers := logs.ProvideLoggers(configuration)
 	router := routes.ProvideRoutes(loggers)

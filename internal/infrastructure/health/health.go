@@ -11,14 +11,16 @@ import (
 const DefaultMemoryUpdatePeriod = time.Duration(60) * time.Second
 
 type Health struct {
-	Pid                int           `json:"pid"`
-	TimeStart          int64         `json:"started_at"`
-	Host               string        `json:"host_name"`
-	Memory             MemoryHealth  `json:"memory"`
-	CpuHealth          CpuHealth     `json:"cpu"`
-	Ready              bool          `json:"ready"`
-	LastMemoryUpdate   int64         `json:"last_memory_update"`
+	Ready            bool  `json:"ready"`
+	Pid              int   `json:"pid"`
+	TimeStart        int64 `json:"started_at"`
+	LastMemoryUpdate int64 `json:"last_memory_update"`
+
 	MemoryUpdatePeriod time.Duration `json:"memory_update_period"`
+
+	Host      string       `json:"host_name"`
+	Memory    MemoryHealth `json:"memory"`
+	CpuHealth CpuHealth    `json:"cpu"`
 
 	collector *HealthCollector
 	mu        sync.Mutex
