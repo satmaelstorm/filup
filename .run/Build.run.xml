@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Build" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="filup" />
+    <working_directory value="$PROJECT_DIR$/bin" />
+    <go_parameters value="-o bin/filup" />
+    <parameters value="server" />
+    <kind value="PACKAGE" />
+    <package value="github.com/satmaelstorm/filup" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$" />
+    <method v="2" />
+  </configuration>
+</component>
