@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Build" type="GoApplicationRunConfiguration" factoryName="Go Application">
+  <configuration default="false" name="Build Server" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="filup" />
     <working_directory value="$PROJECT_DIR$/bin" />
     <go_parameters value="-o bin/filup" />
