@@ -11,7 +11,7 @@ type StoragePart interface {
 }
 
 type PartsComposer interface {
-	ComposeFileParts(destFileName string, fullPartsName []string) (PartsComposerResult, error)
+	ComposeFileParts(destFileName string, fullPartsName []string, tags map[string]string) (PartsComposerResult, error)
 }
 
 type PartsComposerResult interface {

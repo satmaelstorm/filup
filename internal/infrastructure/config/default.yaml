@@ -1,6 +1,7 @@
 http:
   port: 8080
   timeout: 30
+
 logs:
   trace:
     prefix: TRACE
@@ -16,22 +17,27 @@ logs:
       name: critical
   STD:
     prefix: STD
+
 storage:
-  endpoint: localhost:9000
-  useSSL: false
-  region: eu-central-1
-  maxLifeTime: 60
-  buckets:
-    meta: "filup_meta"
-    parts: "filup_parts"
-    final: "filup"
-  credentials:
-    key: minio
-    secret: minio123
+  type: s3
+  s3:
+    endpoint: localhost:9000
+    useSSL: false
+    region: eu-central-1
+    maxLifeTime: 60
+    buckets:
+      meta: "filup_meta"
+      parts: "filup_parts"
+      final: "filup"
+    credentials:
+      key: minio
+      secret: minio123
+
 uploader:
-  copyHeaders:
-    - Content-Type
-  maxFileLength: 52428800 #50Mb
+  uuidNodeId: ""
+  infoFieldName: "_uploader_info"
+  chunkLength: 52428800 #50Mb
+
 queue:
   type: "nats"
   uri: "nats://localhost:4222"

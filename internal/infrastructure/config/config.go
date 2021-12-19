@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/google/uuid"
 	"github.com/satmaelstorm/filup/internal/infrastructure/logs/logsEngine"
 	"time"
 )
@@ -21,6 +22,16 @@ func (c *Configuration) AfterLoad() {
 			c.Logs[idx] = cfg
 		}
 	}
+	if "" == c.Uploader.InfoFieldName {
+		c.Uploader.InfoFieldName = "_uploader_info"
+	}
+	if "" != c.Uploader.UuidNodeId {
+		b := uuid.SetNodeID([]byte(c.Uploader.UuidNodeId))
+		if !b {
+			panic("config value uploader.uuidNodeId must be more than 6 bytes")
+		}
+		uuid.SetClockSequence(-1)
+	}
 }
 
 type HTTP struct {
@@ -39,6 +50,11 @@ type StorageCredentials struct {
 }
 
 type Storage struct {
+	Type string
+	S3   S3Config
+}
+
+type S3Config struct {
 	UseSSL      bool
 	MaxLifeTime int
 	Credentials StorageCredentials
@@ -47,7 +63,7 @@ type Storage struct {
 	Region      string
 }
 
-func (s *Storage) GetTimeout() time.Duration {
+func (s *S3Config) GetTimeout() time.Duration {
 	return time.Duration(s.MaxLifeTime) * time.Second
 }
 
@@ -68,14 +84,15 @@ func (q *QueueEngine) GetTimeout() time.Duration {
 }
 
 type Uploader struct {
-	CopyHeaders   []string
-	MaxFileLength int64
+	InfoFieldName string
+	ChunkLength   int64
+	UuidNodeId    string
 }
 
-func (u Uploader) GetCopyHeaders() []string {
-	return u.CopyHeaders
+func (u Uploader) GetChunkLength() int64 {
+	return u.ChunkLength
 }
 
-func (u Uploader) GetMaxFileLength() int64 {
-	return u.MaxFileLength
+func (u Uploader) GetInfoFieldName() string {
+	return u.InfoFieldName
 }

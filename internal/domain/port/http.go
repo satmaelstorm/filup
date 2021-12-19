@@ -24,3 +24,9 @@ type Poster interface {
 		headers ...[2]string,
 	) ([]byte, int, error)
 }
+
+type HttpError interface {
+	error
+	GetCode() int
+	GetErr() error
+}

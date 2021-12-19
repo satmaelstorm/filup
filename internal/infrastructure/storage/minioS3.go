@@ -14,7 +14,7 @@ import (
 
 type MinioS3 struct {
 	client *minio.Client
-	cfg    config.Storage
+	cfg    config.S3Config
 	ctx    context.Context
 }
 
@@ -23,7 +23,7 @@ var storageClient *MinioS3
 func ProvideMinioS3(cfg config.Configuration, cc appctx.CoreContext) (*MinioS3, error) {
 	if nil == storageClient {
 		storageClient = new(MinioS3)
-		storageClient.cfg = cfg.Storage
+		storageClient.cfg = cfg.Storage.S3
 		storageClient.ctx = cc.Ctx()
 		c, err := minio.New(storageClient.cfg.Endpoint, &minio.Options{
 			Creds: credentials.NewStaticV4(
@@ -162,14 +162,20 @@ func (m *MinioS3) GetLoadedFilePartsNames(fileName string) ([]string, error) {
 	return result, nil
 }
 
-func (m *MinioS3) ComposeFileParts(destFileName string, fullPartsName []string) (port.PartsComposerResult, error) {
+func (m *MinioS3) ComposeFileParts(destFileName string, fullPartsName []string, tags map[string]string) (port.PartsComposerResult, error) {
 	objects := make([]minio.CopySrcOptions, len(fullPartsName))
 	for i, fn := range fullPartsName {
 		objects[i] = minio.CopySrcOptions{Bucket: m.cfg.Buckets.Parts, Object: fn}
 	}
 	ctx, cancel := m.getContextTimeout()
 	defer cancel()
-	ui, err := m.client.ComposeObject(ctx, minio.CopyDestOptions{Bucket: m.cfg.Buckets.Final, Object: destFileName}, objects...)
+	dest := minio.CopyDestOptions{
+		Bucket:      m.cfg.Buckets.Final,
+		Object:      destFileName,
+		ReplaceTags: true,
+		UserTags:    tags,
+	}
+	ui, err := m.client.ComposeObject(ctx, dest, objects...)
 	if err != nil {
 		return nil, errors.Wrap(err, "MinioS3.ComposeFileParts")
 	}
