@@ -96,7 +96,7 @@ func (s *suiteUploadMeta) SetupSuite() {
 	s.uploader = MetaUploader{
 		uploaderCfg: config.Uploader{
 			InfoFieldName: "_upload_info",
-			ChunkLength:   1024 * 1025 * 5,
+			ChunkLength:   1024 * 1024 * 5,
 		},
 		metaStorage: fakeStorage{},
 	}
@@ -158,4 +158,19 @@ func (s *suiteUploadMeta) TestAddUuid() {
 	uidFromJson := gjson.GetBytes(r, s.uploader.uploaderCfg.GetInfoFieldName()+".uuid")
 	s.Require().True(uidFromJson.Exists())
 	s.Equal(uid, uidFromJson.String())
+}
+
+func (s *suiteUploadMeta) TestPrepareChunks() {
+	uid := UuidProvider{}.NewUuid()
+	result := s.uploader.prepareChunks(uid, 1024*1024*4)
+	s.Require().Equal(1, len(result.GetChunks()))
+	s.Equal(uid, result.GetUUID())
+	s.Equal(int64(1024*1024*4), result.GetChunks()[0].GetSize())
+	s.Equal(ChunkFileName(uid, 0), result.GetChunks()[0].GetName())
+
+	result = s.uploader.prepareChunks(uid, 1024*1024*36)
+	s.Require().Equal(8, len(result.GetChunks()))
+	s.Equal(uid, result.GetUUID())
+	s.Equal(s.uploader.uploaderCfg.GetChunkLength(), result.GetChunks()[0].GetSize())
+	s.Equal(int64(1024*1024), result.GetChunks()[7].GetSize())
 }

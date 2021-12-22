@@ -45,7 +45,24 @@ func (m *MetaUploader) addUuidToBody(body []byte, uid string) ([]byte, error) {
 
 func (m *MetaUploader) prepareChunks(uniqId string, size int64) dto.UploaderStartResult {
 
-	return dto.UploaderStartResult{}
+	chunkSize := m.uploaderCfg.GetChunkLength()
+
+	if chunkSize > size {
+		return dto.NewUploaderStartResult(uniqId, []dto.UploaderChunk{dto.NewUploaderChunk(ChunkFileName(uniqId, 0), size)})
+	}
+
+	chunksCnt := size / chunkSize
+	lastSize := size - (chunksCnt * chunkSize)
+
+	chunks := make([]dto.UploaderChunk, chunksCnt+1)
+
+	for i := int64(0); i < chunksCnt; i++ {
+		chunks[i] = dto.NewUploaderChunk(ChunkFileName(uniqId, int(i)), chunkSize)
+	}
+
+	chunks[chunksCnt] = dto.NewUploaderChunk(ChunkFileName(uniqId, int(chunksCnt)), lastSize)
+
+	return dto.NewUploaderStartResult(uniqId, chunks)
 }
 
 func (m *MetaUploader) extractParams(body []byte) (innerMeta, error) {

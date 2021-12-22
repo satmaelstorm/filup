@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+const (
+	minChunkLength         = 1024 * 1024 * 5 //@see github.com/minio/minio-go/v7@v7.0.18/constants.go:24
+	maxPartsCount          = 10000
+	maxSinglePutObjectSize = 1024 * 1024 * 1024 * 5
+	minPartSize            = 1024 * 1024 * 16
+)
+
 type Configuration struct {
 	Http     HTTP
 	Storage  Storage
@@ -22,6 +29,11 @@ func (c *Configuration) AfterLoad() {
 			c.Logs[idx] = cfg
 		}
 	}
+
+	if minChunkLength > c.Uploader.ChunkLength {
+		c.Uploader.ChunkLength = minChunkLength
+	}
+
 	if "" == c.Uploader.InfoFieldName {
 		c.Uploader.InfoFieldName = "_uploader_info"
 	}
@@ -95,4 +107,16 @@ func (u Uploader) GetChunkLength() int64 {
 
 func (u Uploader) GetInfoFieldName() string {
 	return u.InfoFieldName
+}
+
+func (u Uploader) GetMaxPartsCount() int64 {
+	return maxPartsCount
+}
+
+func (u Uploader) GetMaxPartSize() int64 {
+	return maxSinglePutObjectSize
+}
+
+func (u Uploader) GetOptPartSize() int64 {
+	return minPartSize
 }
