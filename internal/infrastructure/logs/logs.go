@@ -7,9 +7,9 @@ import (
 
 var ls logsEngine.Loggers
 
-func ProvideLoggers(cfg config.Configuration) logsEngine.Loggers {
+func ProvideLoggers(cfg config.Configuration) *logsEngine.Loggers {
 	if nil == ls {
 		ls = logsEngine.InitLoggersByConfig(cfg.Logs, config.ProjectName, true)
 	}
-	return ls
+	return &ls
 }

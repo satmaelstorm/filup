@@ -21,8 +21,9 @@ import (
 
 func InitWebServer() (*web.Server, error) {
 	coreContext := appctx.ProvideContext()
-	uploaderConfig := config.ProvideUploaderConfig()
 	configuration := config.ProvideConfig()
+	loggers := logs.ProvideLoggers(configuration)
+	uploaderConfig := config.ProvideUploaderConfig()
 	minioS3, err := storage.ProvideMinioS3(configuration, coreContext)
 	if err != nil {
 		return nil, err
@@ -30,8 +31,7 @@ func InitWebServer() (*web.Server, error) {
 	uuidProvider := domain.ProvideUuidProvider()
 	requestHelpers := web.ProvideRequestHelpers()
 	metaUploader := domain.ProvideMetaUploader(coreContext, uploaderConfig, minioS3, uuidProvider, requestHelpers)
-	handlersHandlers := handlers.ProvideHandlers(metaUploader)
-	loggers := logs.ProvideLoggers(configuration)
+	handlersHandlers := handlers.ProvideHandlers(loggers, metaUploader)
 	router := routes.ProvideRoutes(handlersHandlers, loggers)
 	server := web.ProvideWebServer(coreContext, router, configuration, loggers)
 	return server, nil

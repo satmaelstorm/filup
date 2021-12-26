@@ -22,7 +22,7 @@ type Server struct {
 	Router    *router.Router
 	Config    config.HTTP
 	Ctx       context.Context
-	Logs      logsEngine.Loggers
+	Logs      logsEngine.ILogger
 	Cc        *appctx.CoreContext
 }
 
@@ -30,7 +30,7 @@ func ProvideWebServer(
 	ctx *appctx.CoreContext,
 	routes *router.Router,
 	cfg config.Configuration,
-	logs logsEngine.Loggers,
+	logs logsEngine.ILogger,
 ) *Server {
 	webServer := new(Server)
 	webServer.Router = routes

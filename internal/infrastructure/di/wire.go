@@ -10,6 +10,7 @@ import (
 	"github.com/satmaelstorm/filup/internal/infrastructure/appctx"
 	"github.com/satmaelstorm/filup/internal/infrastructure/config"
 	"github.com/satmaelstorm/filup/internal/infrastructure/logs"
+	"github.com/satmaelstorm/filup/internal/infrastructure/logs/logsEngine"
 	"github.com/satmaelstorm/filup/internal/infrastructure/storage"
 	"github.com/satmaelstorm/filup/internal/infrastructure/web"
 	"github.com/satmaelstorm/filup/internal/infrastructure/web/handlers"
@@ -22,6 +23,7 @@ func InitWebServer() (*web.Server, error) {
 		wire.Bind(new(port.StorageMeta), new(*storage.MinioS3)),
 		wire.Bind(new(port.Poster), new(*web.RequestHelpers)),
 		wire.Bind(new(port.HandlerJson), new(*domain.MetaUploader)),
+		wire.Bind(new(logsEngine.ILogger), new(*logsEngine.Loggers)),
 
 		appctx.ProvideContext,
 		config.ProvideConfig,

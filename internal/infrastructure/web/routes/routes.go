@@ -30,7 +30,7 @@ var (
 	}, []string{"code"})
 )
 
-func ProvideRoutes(hs *handlers.Handlers, logger logsEngine.Loggers) *router.Router {
+func ProvideRoutes(hs *handlers.Handlers, logger logsEngine.ILogger) *router.Router {
 	prometheus.MustRegister(requestCount, requestDuration)
 	r := router.New()
 
