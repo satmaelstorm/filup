@@ -5,7 +5,7 @@ import "github.com/google/uuid"
 type UuidProvider struct {
 }
 
-func NewUuidProvider() UuidProvider {
+func ProvideUuidProvider() UuidProvider {
 	return UuidProvider{}
 }
 

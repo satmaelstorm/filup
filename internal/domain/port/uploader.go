@@ -1,8 +1,16 @@
 package port
 
+import (
+	"net/url"
+	"time"
+)
+
 type UploaderConfig interface {
 	GetInfoFieldName() string
 	GetChunkLength() int64
+	GetCallbackBefore() *url.URL
+	GetCallbackAfter() *url.URL
+	GetHttpTimeout() time.Duration
 }
 
 type UploaderConfigWithConstants interface {

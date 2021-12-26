@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/google/uuid"
 	"github.com/satmaelstorm/filup/internal/infrastructure/logs/logsEngine"
+	"net/url"
 	"time"
 )
 
@@ -29,21 +30,7 @@ func (c *Configuration) AfterLoad() {
 			c.Logs[idx] = cfg
 		}
 	}
-
-	if minChunkLength > c.Uploader.ChunkLength {
-		c.Uploader.ChunkLength = minChunkLength
-	}
-
-	if "" == c.Uploader.InfoFieldName {
-		c.Uploader.InfoFieldName = "_uploader_info"
-	}
-	if "" != c.Uploader.UuidNodeId {
-		b := uuid.SetNodeID([]byte(c.Uploader.UuidNodeId))
-		if !b {
-			panic("config value uploader.uuidNodeId must be more than 6 bytes")
-		}
-		uuid.SetClockSequence(-1)
-	}
+	c.Uploader = c.Uploader.AfterLoad()
 }
 
 type HTTP struct {
@@ -96,9 +83,28 @@ func (q *QueueEngine) GetTimeout() time.Duration {
 }
 
 type Uploader struct {
-	InfoFieldName string
-	ChunkLength   int64
-	UuidNodeId    string
+	InfoFieldName  string
+	ChunkLength    int64
+	UuidNodeId     string
+	CallbackBefore string
+	CallbackAfter  string
+	HttpTimeout    int64
+
+	parsedCallbackBefore *url.URL
+	parsedCallbackAfter  *url.URL
+	httpTimeout          time.Duration
+}
+
+func (u Uploader) GetHttpTimeout() time.Duration {
+	return u.httpTimeout
+}
+
+func (u Uploader) GetCallbackBefore() *url.URL {
+	return u.parsedCallbackBefore
+}
+
+func (u Uploader) GetCallbackAfter() *url.URL {
+	return u.parsedCallbackAfter
 }
 
 func (u Uploader) GetChunkLength() int64 {
@@ -119,4 +125,40 @@ func (u Uploader) GetMaxPartSize() int64 {
 
 func (u Uploader) GetOptPartSize() int64 {
 	return minPartSize
+}
+
+func (u Uploader) AfterLoad() Uploader {
+	if minChunkLength > u.ChunkLength {
+		u.ChunkLength = minChunkLength
+	}
+
+	if "" == u.InfoFieldName {
+		u.InfoFieldName = "_uploader_info"
+	}
+	if "" != u.UuidNodeId {
+		b := uuid.SetNodeID([]byte(u.UuidNodeId))
+		if !b {
+			panic("config value uploader.uuidNodeId must be more than 6 bytes")
+		}
+		uuid.SetClockSequence(-1)
+	}
+
+	u.httpTimeout = time.Duration(u.HttpTimeout) * time.Second
+
+	var err error
+	if u.CallbackBefore != "" {
+		u.parsedCallbackBefore, err = url.Parse(u.CallbackBefore)
+		if err != nil {
+			panic("error in Uploader.AfterLoad() while parse CallbackBefore: " + err.Error())
+		}
+	}
+
+	if u.CallbackAfter != "" {
+		u.parsedCallbackAfter, err = url.Parse(u.CallbackAfter)
+		if err != nil {
+			panic("error in Uploader.AfterLoad() while parse CallbackAfter: " + err.Error())
+		}
+	}
+
+	return u
 }

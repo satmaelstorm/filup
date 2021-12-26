@@ -1,41 +1,58 @@
 package dto
 
 type UploaderChunk struct {
-	size int64
-	name string
+	Size int64  `json:"size"`
+	Name string `json:"name"`
 }
 
 func (c UploaderChunk) GetSize() int64 {
-	return c.size
+	return c.Size
 }
 
 func (c UploaderChunk) GetName() string {
-	return c.name
+	return c.Name
 }
 
 func NewUploaderChunk(name string, size int64) UploaderChunk {
 	return UploaderChunk{
-		size: size,
-		name: name,
+		Size: size,
+		Name: name,
 	}
 }
 
 type UploaderStartResult struct {
-	uuid   string
-	chunks []UploaderChunk
+	Uuid     string            `json:"uuid"`
+	Size     int64             `json:"size"`
+	UserTags map[string]string `json:"user_tags"`
+	Chunks   []UploaderChunk   `json:"chunks"`
 }
 
 func (u *UploaderStartResult) GetUUID() string {
-	return u.uuid
+	return u.Uuid
 }
 
 func (u *UploaderStartResult) GetChunks() []UploaderChunk {
-	return u.chunks
+	return u.Chunks
 }
 
-func NewUploaderStartResult(uuid string, chunks []UploaderChunk) UploaderStartResult {
+func (u *UploaderStartResult) GetSize() int64 {
+	return u.Size
+}
+
+func (u *UploaderStartResult) GetUserTags() map[string]string {
+	return u.UserTags
+}
+
+func NewUploaderStartResult(
+	uuid string,
+	chunks []UploaderChunk,
+	size int64,
+	userTags map[string]string,
+) UploaderStartResult {
 	return UploaderStartResult{
-		uuid:   uuid,
-		chunks: chunks,
+		Uuid:     uuid,
+		Chunks:   chunks,
+		Size:     size,
+		UserTags: userTags,
 	}
 }

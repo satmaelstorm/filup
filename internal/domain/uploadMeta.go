@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"context"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/satmaelstorm/filup/internal/domain/dto"
 	"github.com/satmaelstorm/filup/internal/domain/exceptions"
 	"github.com/satmaelstorm/filup/internal/domain/port"
@@ -13,26 +15,98 @@ type innerMeta struct {
 	size          int64
 	uuid          string
 	uuidGenerated bool
+	userTags      map[string]string
+}
+
+func ProvideMetaUploader(
+	ctxProvider port.ContextProvider,
+	config port.UploaderConfig,
+	storage port.StorageMeta,
+	uuidProvider UuidProvider,
+	poster port.Poster,
+) *MetaUploader {
+	return &MetaUploader{
+		uploaderCfg:  config,
+		metaStorage:  storage,
+		UuidProvider: uuidProvider,
+		poster:       poster,
+		ctx:          ctxProvider.Ctx(),
+	}
 }
 
 type MetaUploader struct {
 	uploaderCfg  port.UploaderConfig
 	metaStorage  port.StorageMeta
 	UuidProvider UuidProvider
+	poster       port.Poster
+	ctx          context.Context
 }
 
-func (m *MetaUploader) Handler(body []byte) (dto.UploaderStartResult, error) {
+func (m *MetaUploader) Handle(headers [][2]string, body []byte) ([]byte, error) {
 	im, err := m.extractParams(body)
 	if err != nil {
-		return dto.UploaderStartResult{}, err
+		return nil, err
 	}
 	if im.uuidGenerated {
 		body, err = m.addUuidToBody(body, im.uuid)
 		if err != nil {
-			return dto.UploaderStartResult{}, err
+			return nil, err
 		}
 	}
-	return m.prepareChunks(im.uuid, im.size), nil
+
+	chunks := m.prepareChunks(im)
+
+	body, err = m.addChunksToBody(body, chunks)
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.postBeforeUpload(headers, body)
+	if err != nil {
+		return nil, err
+	}
+
+	metaContent, err := m.renderMetaContent(chunks)
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.putMetaFile(chunks.GetUUID(), metaContent)
+	if err != nil {
+		return nil, err
+	}
+
+	return metaContent, nil
+}
+
+func (m *MetaUploader) renderMetaContent(chunks dto.UploaderStartResult) ([]byte, error) {
+	content, err := jsoniter.Marshal(chunks)
+	if err != nil {
+		return nil, exceptions.NewApiError(http.StatusInternalServerError, err.Error())
+	}
+	return content, nil
+}
+
+func (m *MetaUploader) putMetaFile(uuid string, content []byte) error {
+	err := m.metaStorage.PutMetaFile(MetaFileName(uuid), content)
+	if err != nil {
+		return exceptions.NewApiError(http.StatusInternalServerError, err.Error())
+	}
+	return nil
+}
+
+func (m *MetaUploader) postBeforeUpload(headers [][2]string, body []byte) error {
+	if nil == m.uploaderCfg.GetCallbackBefore() {
+		return nil
+	}
+	httpResult, httpCode, err := m.poster.Post(m.ctx, *m.uploaderCfg.GetCallbackBefore(), m.uploaderCfg.GetHttpTimeout(), body, headers...)
+	if err != nil {
+		return exceptions.NewApiError(http.StatusBadGateway, "Post error: "+err.Error())
+	}
+	if httpCode < 200 || httpCode > 299 {
+		return exceptions.NewApiError(httpCode, string(httpResult))
+	}
+	return nil
 }
 
 func (m *MetaUploader) addUuidToBody(body []byte, uid string) ([]byte, error) {
@@ -43,26 +117,43 @@ func (m *MetaUploader) addUuidToBody(body []byte, uid string) ([]byte, error) {
 	return newBody, nil
 }
 
-func (m *MetaUploader) prepareChunks(uniqId string, size int64) dto.UploaderStartResult {
+func (m *MetaUploader) addChunksToBody(body []byte, chunks dto.UploaderStartResult) ([]byte, error) {
+	addJson, err := jsoniter.Marshal(chunks)
+	if err != nil {
+		return nil, exceptions.NewApiError(http.StatusInternalServerError, err.Error())
+	}
+	newBody, err := sjson.SetRawBytes(body, m.uploaderCfg.GetInfoFieldName()+".chunks_info", addJson)
+	if err != nil {
+		return nil, exceptions.NewApiError(http.StatusInternalServerError, err.Error())
+	}
+	return newBody, nil
+}
+
+func (m *MetaUploader) prepareChunks(im innerMeta) dto.UploaderStartResult {
 
 	chunkSize := m.uploaderCfg.GetChunkLength()
 
-	if chunkSize > size {
-		return dto.NewUploaderStartResult(uniqId, []dto.UploaderChunk{dto.NewUploaderChunk(ChunkFileName(uniqId, 0), size)})
+	if chunkSize > im.size {
+		return dto.NewUploaderStartResult(
+			im.uuid,
+			[]dto.UploaderChunk{dto.NewUploaderChunk(ChunkFileName(im.uuid, 0), im.size)},
+			im.size,
+			im.userTags,
+		)
 	}
 
-	chunksCnt := size / chunkSize
-	lastSize := size - (chunksCnt * chunkSize)
+	chunksCnt := im.size / chunkSize
+	lastSize := im.size - (chunksCnt * chunkSize)
 
 	chunks := make([]dto.UploaderChunk, chunksCnt+1)
 
 	for i := int64(0); i < chunksCnt; i++ {
-		chunks[i] = dto.NewUploaderChunk(ChunkFileName(uniqId, int(i)), chunkSize)
+		chunks[i] = dto.NewUploaderChunk(ChunkFileName(im.uuid, int(i)), chunkSize)
 	}
 
-	chunks[chunksCnt] = dto.NewUploaderChunk(ChunkFileName(uniqId, int(chunksCnt)), lastSize)
+	chunks[chunksCnt] = dto.NewUploaderChunk(ChunkFileName(im.uuid, int(chunksCnt)), lastSize)
 
-	return dto.NewUploaderStartResult(uniqId, chunks)
+	return dto.NewUploaderStartResult(im.uuid, chunks, im.size, im.userTags)
 }
 
 func (m *MetaUploader) extractParams(body []byte) (innerMeta, error) {
@@ -87,22 +178,19 @@ func (m *MetaUploader) extractParams(body []byte) (innerMeta, error) {
 		im.uuid = m.UuidProvider.NewUuid()
 		im.uuidGenerated = true
 	}
+	im.userTags = m.extractUserTags(uploaderInfo)
 	return im, nil
 }
 
-func (m *MetaUploader) ExtractUserTags(body []byte) (map[string]string, error) {
-	uploaderInfo := gjson.GetBytes(body, m.uploaderCfg.GetInfoFieldName())
-	if !uploaderInfo.Exists() {
-		return nil, exceptions.NewApiError(http.StatusBadRequest, "field "+m.uploaderCfg.GetInfoFieldName()+" is required!")
-	}
+func (m *MetaUploader) extractUserTags(uploaderInfo gjson.Result) map[string]string {
+	result := make(map[string]string)
 	tags := uploaderInfo.Get("user_tags")
 	if !tags.Exists() {
-		return nil, nil
+		return result
 	}
-	result := make(map[string]string)
 	tags.ForEach(func(key, value gjson.Result) bool {
 		result[key.String()] = value.String()
 		return true
 	})
-	return result, nil
+	return result
 }

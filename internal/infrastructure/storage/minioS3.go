@@ -7,7 +7,6 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/pkg/errors"
 	"github.com/satmaelstorm/filup/internal/domain/port"
-	"github.com/satmaelstorm/filup/internal/infrastructure/appctx"
 	"github.com/satmaelstorm/filup/internal/infrastructure/config"
 	"io"
 )
@@ -20,7 +19,7 @@ type MinioS3 struct {
 
 var storageClient *MinioS3
 
-func ProvideMinioS3(cfg config.Configuration, cc appctx.CoreContext) (*MinioS3, error) {
+func ProvideMinioS3(cfg config.Configuration, cc port.ContextProvider) (*MinioS3, error) {
 	if nil == storageClient {
 		storageClient = new(MinioS3)
 		storageClient.cfg = cfg.Storage.S3

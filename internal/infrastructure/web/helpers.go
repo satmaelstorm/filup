@@ -20,7 +20,7 @@ type RequestHelpers struct {
 	requestFunc RequestFunc
 }
 
-func NewRequestHelpers() *RequestHelpers {
+func ProvideRequestHelpers() *RequestHelpers {
 	return &RequestHelpers{requestFunc: doRequest}
 }
 

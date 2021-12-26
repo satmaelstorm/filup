@@ -13,7 +13,3 @@ func ChunkFileName(uid string, num int) string {
 func MetaFileName(uid string) string {
 	return uid + "_meta"
 }
-
-func MetaChunksFileName(uid string) string {
-	return uid + "_meta_chunks"
-}

@@ -30,3 +30,7 @@ type HttpError interface {
 	GetCode() int
 	GetErr() error
 }
+
+type HandlerJson interface {
+	Handle(headers [][2]string, body []byte) ([]byte, error)
+}

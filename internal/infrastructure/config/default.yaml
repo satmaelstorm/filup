@@ -37,6 +37,9 @@ uploader:
   uuidNodeId: ""
   infoFieldName: "_uploader_info"
   chunkLength: 52428800 #50Mb
+  callbackBefore:
+  callbackAfter:
+  httpTimeout: 5
 
 queue:
   type: "nats"

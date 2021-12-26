@@ -7,6 +7,7 @@ import (
 	"github.com/satmaelstorm/filup/internal/infrastructure/config"
 	"github.com/satmaelstorm/filup/internal/infrastructure/logs/logsEngine"
 	"github.com/satmaelstorm/filup/internal/infrastructure/metrics"
+	"github.com/satmaelstorm/filup/internal/infrastructure/web/handlers"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"github.com/valyala/fasthttp/pprofhandler"
@@ -29,7 +30,7 @@ var (
 	}, []string{"code"})
 )
 
-func ProvideRoutes(logger logsEngine.Loggers) *router.Router {
+func ProvideRoutes(hs *handlers.Handlers, logger logsEngine.Loggers) *router.Router {
 	prometheus.MustRegister(requestCount, requestDuration)
 	r := router.New()
 
@@ -42,7 +43,7 @@ func ProvideRoutes(logger logsEngine.Loggers) *router.Router {
 	r.GET("/debug/pprof/{ep:*}", pprofhandler.PprofHandler)
 	r.GET(Metrics, fasthttpadaptor.NewFastHTTPHandler(promhttp.Handler()))
 
-	innerHandler := getDomainRouter().Handler
+	innerHandler := getDomainRouter(hs).Handler
 
 	r.ANY("/{path:*}", func(ctx *fasthttp.RequestCtx) {
 		timeStart := time.Now()
@@ -65,11 +66,13 @@ func ProvideRoutes(logger logsEngine.Loggers) *router.Router {
 	return r
 }
 
-func getDomainRouter() *router.Router {
+func getDomainRouter(hs *handlers.Handlers) *router.Router {
 	r := router.New()
 	r.GET("/upload", func(ctx *fasthttp.RequestCtx) {
 		ctx.Response.SetBodyString("upload api")
 	})
+
+	r.POST(StartUpload, hs.StartUpload)
 
 	return r
 }

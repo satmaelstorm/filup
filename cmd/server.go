@@ -9,8 +9,12 @@ var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Start Filup-server",
 	Long:  "Start Filup-server",
-	Run: func(cmd *cobra.Command, args []string) {
-		server := di.InitWebServer()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		server, err := di.InitWebServer()
+		if err != nil {
+			return err
+		}
 		server.Run()
+		return nil
 	},
 }
