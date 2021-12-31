@@ -26,8 +26,8 @@ storage:
     region: eu-central-1
     maxLifeTime: 60
     buckets:
-      meta: "filup_meta"
-      parts: "filup_parts"
+      meta: "filup-meta"
+      parts: "filup-parts"
       final: "filup"
     credentials:
       key: minio

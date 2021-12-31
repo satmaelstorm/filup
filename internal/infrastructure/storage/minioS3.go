@@ -69,15 +69,15 @@ func (m *MinioS3) ensureBucket(bucketName string) error {
 	defer cancel()
 	b, err := m.client.BucketExists(ctx, bucketName)
 	if err != nil {
-		return errors.Wrap(err, "ensureBucket")
+		return errors.Wrap(err, "ensureBucket ("+bucketName+") ")
 	}
 	if !b {
-		err := m.client.MakeBucket(ctx, m.cfg.Buckets.Parts, minio.MakeBucketOptions{
+		err := m.client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{
 			Region:        m.cfg.Region,
 			ObjectLocking: false,
 		})
 		if err != nil {
-			return errors.Wrap(err, "ensureBucket")
+			return errors.Wrap(err, "ensureBucket ("+bucketName+") ")
 		}
 	}
 
