@@ -204,10 +204,13 @@ func (s *suiteUploadMeta) TestPrepareChunks() {
 		userTags: map[string]string{"tag1": "val1"},
 	}
 	result := s.uploader.prepareChunks(im)
+	chunkFileName0 := ChunkFileName(im.uuid, 0)
+	chunkFileName7 := ChunkFileName(im.uuid, 7)
 	s.Require().Equal(1, len(result.GetChunks()))
 	s.Equal(uid, result.GetUUID())
-	s.Equal(int64(1024*1024*4), result.GetChunks()[0].GetSize())
-	s.Equal(ChunkFileName(uid, 0), result.GetChunks()[0].GetName())
+	s.Require().Contains(result.GetChunks(), chunkFileName0)
+	s.Equal(int64(1024*1024*4), result.GetChunks()[chunkFileName0].GetSize())
+	s.Equal(ChunkFileName(uid, 0), result.GetChunks()[chunkFileName0].GetName())
 	s.Equal(int64(1024*1024*4), result.GetSize())
 	s.Require().Equal(len(im.userTags), len(result.GetUserTags()))
 	s.Require().Contains(result.GetUserTags(), "tag1")
@@ -217,8 +220,10 @@ func (s *suiteUploadMeta) TestPrepareChunks() {
 	result = s.uploader.prepareChunks(im)
 	s.Require().Equal(8, len(result.GetChunks()))
 	s.Equal(uid, result.GetUUID())
-	s.Equal(s.uploader.uploaderCfg.GetChunkLength(), result.GetChunks()[0].GetSize())
-	s.Equal(int64(1024*1024), result.GetChunks()[7].GetSize())
+	s.Require().Contains(result.GetChunks(), chunkFileName0)
+	s.Require().Contains(result.GetChunks(), chunkFileName7)
+	s.Equal(s.uploader.uploaderCfg.GetChunkLength(), result.GetChunks()[chunkFileName0].GetSize())
+	s.Equal(int64(1024*1024), result.GetChunks()[chunkFileName7].GetSize())
 	s.Equal(im.size, result.GetSize())
 }
 
@@ -235,7 +240,7 @@ func (s *suiteUploadMeta) TestAddChunks() {
 	s.Require().Contains(m, "uuid")
 	s.Require().Contains(m, "chunks")
 	s.Equal(m["uuid"].String(), uid)
-	s.Equal(len(result.GetChunks()), len(m["chunks"].Array()))
+	s.Equal(len(result.GetChunks()), len(m["chunks"].Map()))
 }
 
 func (s *suiteUploadMeta) TestPutMetaFile() {

@@ -134,9 +134,10 @@ func (m *MetaUploader) prepareChunks(im innerMeta) dto.UploaderStartResult {
 	chunkSize := m.uploaderCfg.GetChunkLength()
 
 	if chunkSize > im.size {
+		chunkFileName := ChunkFileName(im.uuid, 0)
 		return dto.NewUploaderStartResult(
 			im.uuid,
-			[]dto.UploaderChunk{dto.NewUploaderChunk(ChunkFileName(im.uuid, 0), im.size)},
+			map[string]dto.UploaderChunk{chunkFileName: dto.NewUploaderChunk(chunkFileName, im.size)},
 			im.size,
 			im.userTags,
 		)
@@ -145,13 +146,15 @@ func (m *MetaUploader) prepareChunks(im innerMeta) dto.UploaderStartResult {
 	chunksCnt := im.size / chunkSize
 	lastSize := im.size - (chunksCnt * chunkSize)
 
-	chunks := make([]dto.UploaderChunk, chunksCnt+1)
+	chunks := make(map[string]dto.UploaderChunk, chunksCnt+1)
 
 	for i := int64(0); i < chunksCnt; i++ {
-		chunks[i] = dto.NewUploaderChunk(ChunkFileName(im.uuid, int(i)), chunkSize)
+		chunkFileName := ChunkFileName(im.uuid, int(i))
+		chunks[chunkFileName] = dto.NewUploaderChunk(chunkFileName, chunkSize)
 	}
 
-	chunks[chunksCnt] = dto.NewUploaderChunk(ChunkFileName(im.uuid, int(chunksCnt)), lastSize)
+	chunkFileName := ChunkFileName(im.uuid, int(chunksCnt))
+	chunks[chunkFileName] = dto.NewUploaderChunk(chunkFileName, lastSize)
 
 	return dto.NewUploaderStartResult(im.uuid, chunks, im.size, im.userTags)
 }

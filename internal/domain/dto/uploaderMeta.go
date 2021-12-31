@@ -21,17 +21,17 @@ func NewUploaderChunk(name string, size int64) UploaderChunk {
 }
 
 type UploaderStartResult struct {
-	Uuid     string            `json:"uuid"`
-	Size     int64             `json:"size"`
-	UserTags map[string]string `json:"user_tags"`
-	Chunks   []UploaderChunk   `json:"chunks"`
+	Uuid     string                   `json:"uuid"`
+	Size     int64                    `json:"size"`
+	UserTags map[string]string        `json:"user_tags"`
+	Chunks   map[string]UploaderChunk `json:"chunks"`
 }
 
 func (u *UploaderStartResult) GetUUID() string {
 	return u.Uuid
 }
 
-func (u *UploaderStartResult) GetChunks() []UploaderChunk {
+func (u *UploaderStartResult) GetChunks() map[string]UploaderChunk {
 	return u.Chunks
 }
 
@@ -45,7 +45,7 @@ func (u *UploaderStartResult) GetUserTags() map[string]string {
 
 func NewUploaderStartResult(
 	uuid string,
-	chunks []UploaderChunk,
+	chunks map[string]UploaderChunk,
 	size int64,
 	userTags map[string]string,
 ) UploaderStartResult {
