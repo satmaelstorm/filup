@@ -48,4 +48,5 @@ Access-Token: qwiluergcnkrctmkaejr
 
 9 - 14. Filup checks - if all chunks is uploaded, then storage compose object. Than Filup make POST JsonRequest with meta information (such as uuid) to `uploader.callbackAfter`. 
 If backend don't response with 2xx code, there will be several retires (defined by `uploader.httpRetries`). Regardless of success repsponse from backend, to frontend 200 OK will be sent.
+
 15. If not all chunks already uploaded - Http Code 100 will be sent to frontend.
