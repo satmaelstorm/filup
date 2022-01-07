@@ -130,7 +130,6 @@ func (m *MetaUploader) addChunksToBody(body []byte, chunks dto.UploaderStartResu
 }
 
 func (m *MetaUploader) prepareChunks(im innerMeta) dto.UploaderStartResult {
-
 	chunkSize := m.uploaderCfg.GetChunkLength()
 
 	if chunkSize > im.size {

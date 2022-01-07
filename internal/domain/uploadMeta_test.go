@@ -109,7 +109,6 @@ func TestUploadMeta(t *testing.T) {
 }
 
 func (s *suiteUploadMeta) SetupSuite() {
-
 	cfg := config.Uploader{
 		InfoFieldName:  "_upload_info",
 		ChunkLength:    1024 * 1024 * 5,
