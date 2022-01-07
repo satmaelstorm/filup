@@ -1,0 +1,39 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+autonumber
+
+participant "Frontend Application" as FA
+participant "Filup Service" as FS
+participant "Backend Server" as BS
+database S3Storage AS S3
+
+group Start Upload
+    FA -> FS: POST Json Request to /upload/start
+    FS -> BS: POST Json Request callbackBefore
+    BS -> FS: Response
+    alt "Backend Server" response with 200 or 204
+        FS -> S3: file with meta information
+        FS -> FA: Response with meta information
+    else "Backend Server" returns error
+        FS -> FA: Response with error from "Backend Server"
+    end
+end
+
+group Upload file
+    FA -> FS: POST multipart/form-data
+    FS -> S3: Save part
+    alt All parts saved
+        FS -> S3: Compose object
+        FS -> BS: POST Json Request callbackAfter
+        BS -> FS: Response
+        alt "Backend Server" Reponse with not 2xx code
+            FS -> BS: Retry callbackAfter N Times
+            FS -> FS: Log critical error, if "Backend Server" don't Reponse with 2xx
+        end
+        FS -> FA: Http code 200
+    else
+        FS -> FA: Http code 100
+    end
+end
+
+@enduml

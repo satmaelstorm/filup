@@ -89,6 +89,7 @@ type Uploader struct {
 	CallbackBefore string
 	CallbackAfter  string
 	HttpTimeout    int64
+	HttpRetries    int
 
 	parsedCallbackBefore *url.URL
 	parsedCallbackAfter  *url.URL
@@ -125,6 +126,10 @@ func (u Uploader) GetMaxPartSize() int64 {
 
 func (u Uploader) GetOptPartSize() int64 {
 	return minPartSize
+}
+
+func (u Uploader) GetHttpRetries() int {
+	return u.HttpRetries
 }
 
 func (u Uploader) AfterLoad() Uploader {

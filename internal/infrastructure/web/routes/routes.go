@@ -73,6 +73,7 @@ func getDomainRouter(hs *handlers.Handlers) *router.Router {
 	})
 
 	r.POST(StartUpload, hs.StartUpload)
+	r.POST(UploadPart, hs.PartUpload)
 
 	return r
 }

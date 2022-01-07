@@ -40,6 +40,7 @@ uploader:
   callbackBefore:
   callbackAfter:
   httpTimeout: 5
+  httpRetries: 3
 
 queue:
   type: "nats"

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/satmaelstorm/filup/internal/domain/exceptions"
 	"github.com/satmaelstorm/filup/internal/domain/port"
 	"github.com/satmaelstorm/filup/internal/infrastructure/logs/logsEngine"
 	"github.com/valyala/fasthttp"
@@ -30,6 +31,24 @@ func (h *Handlers) StartUpload(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	ctx.SetBody(response)
+}
+
+func (h *Handlers) PartUpload(ctx *fasthttp.RequestCtx) {
+	mf, err := ctx.Request.MultipartForm()
+	if err != nil {
+		h.processError(ctx, exceptions.NewApiError(http.StatusBadRequest, err.Error()))
+		return
+	}
+	defer ctx.Request.RemoveMultipartFormFiles()
+	fileSlice := mf.File["part"]
+	if len(fileSlice) < 1 {
+		h.processError(ctx, exceptions.NewApiError(http.StatusBadRequest, "No part field"))
+		return
+	}
+	if fileSlice[0] == nil {
+		h.processError(ctx, exceptions.NewApiError(http.StatusBadRequest, "No part field"))
+		return
+	}
 }
 
 func (h *Handlers) processError(ctx *fasthttp.RequestCtx, err error) {
