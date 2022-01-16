@@ -41,6 +41,7 @@ uploader:
   callbackAfter:
   httpTimeout: 5
   httpRetries: 3
+  composerWorkers: 5
 
 queue:
   type: "nats"

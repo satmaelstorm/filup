@@ -21,8 +21,12 @@ func InitWebServer() (*web.Server, error) {
 	wire.Build(
 		wire.Bind(new(port.ContextProvider), new(*appctx.CoreContext)),
 		wire.Bind(new(port.StorageMeta), new(*storage.MinioS3)),
+		wire.Bind(new(port.StoragePart), new(*storage.MinioS3)),
+		wire.Bind(new(port.PartsComposer), new(*storage.MinioS3)),
 		wire.Bind(new(port.Poster), new(*web.RequestHelpers)),
 		wire.Bind(new(port.HandlerJson), new(*domain.MetaUploader)),
+		wire.Bind(new(port.HandlerMultipart), new(*domain.UploadParts)),
+		wire.Bind(new(port.CriticalLogger), new(*logsEngine.Loggers)),
 		wire.Bind(new(logsEngine.ILogger), new(*logsEngine.Loggers)),
 
 		appctx.ProvideContext,
@@ -36,6 +40,8 @@ func InitWebServer() (*web.Server, error) {
 		storage.ProvideMinioS3,
 		domain.ProvideMetaUploader,
 		domain.ProvideUuidProvider,
+		domain.ProvideUploadParts,
+		domain.ProvidePartsComposer,
 	)
 	return &web.Server{}, nil
 }

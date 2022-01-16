@@ -44,9 +44,22 @@ Access-Token: qwiluergcnkrctmkaejr
 
 #### Upload file
 7. Frontend application make POST with multipart/form-data to `/upload/part` endpoint. Filename MUST BE from chunks meta information.
+Sample request:
+```http request
+POST http://localhost:8080/upload/part
+Content-Type: multipart/form-data; boundary=RaNdOmDeLiMiTeR
+
+--RaNdOmDeLiMiTeR
+Content-Disposition: form-data; name=part; filename="870915da-76bb-11ec-8686-e4e7494803df_part_0"
+
+ojioeprtfoertfowerjtfioer,t;d,oersmvfylisdjr,fst;d,osfimbyjihldrtdk
+dsfafdsfas
+asdfadsfadsf
+--RaNdOmDeLiMiTeR--
+```
 8. Filup save chunk, if name is correct, to storage'
 
 9 - 14. Filup checks - if all chunks is uploaded, then storage compose object. Than Filup make POST JsonRequest with meta information (such as uuid) to `uploader.callbackAfter`. 
-If backend don't response with 2xx code, there will be several retires (defined by `uploader.httpRetries`). Regardless of success repsponse from backend, to frontend 200 OK will be sent.
+If backend don't response with 2xx code, there will be several retires (defined by `uploader.httpRetries`). Regardless of success repsponse from backend, to frontend 204 OK will be sent.
 
 15. If not all chunks already uploaded - Http Code 100 will be sent to frontend.

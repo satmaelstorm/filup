@@ -12,6 +12,7 @@ type UploaderConfig interface {
 	GetCallbackAfter() *url.URL
 	GetHttpTimeout() time.Duration
 	GetHttpRetries() int
+	GetComposerWorkers() int
 }
 
 type UploaderConfigWithConstants interface {

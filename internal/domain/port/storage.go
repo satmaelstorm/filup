@@ -1,12 +1,14 @@
 package port
 
+import "io"
+
 type StorageMeta interface {
 	PutMetaFile(fileName string, content []byte) error
 	GetMetaFile(fileName string) ([]byte, error)
 }
 
 type StoragePart interface {
-	PutFilePart(fullPartName string, content []byte) error
+	PutFilePart(fullPartName string, filesize int64, content io.Reader) error
 	GetLoadedFilePartsNames(fileName string) ([]string, error)
 }
 

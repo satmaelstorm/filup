@@ -11,15 +11,18 @@ import (
 type Handlers struct {
 	logger          logsEngine.ILogger
 	CoreStartUpload port.HandlerJson
+	CorePartUpload  port.HandlerMultipart
 }
 
 func ProvideHandlers(
 	logger logsEngine.ILogger,
 	StartUpload port.HandlerJson,
+	PartUpload port.HandlerMultipart,
 ) *Handlers {
 	return &Handlers{
 		logger:          logger,
 		CoreStartUpload: StartUpload,
+		CorePartUpload:  PartUpload,
 	}
 }
 
@@ -49,14 +52,33 @@ func (h *Handlers) PartUpload(ctx *fasthttp.RequestCtx) {
 		h.processError(ctx, exceptions.NewApiError(http.StatusBadRequest, "No part field"))
 		return
 	}
+	file, err := fileSlice[0].Open()
+	if err != nil {
+		h.processError(ctx, exceptions.NewApiError(http.StatusBadRequest, err.Error()))
+		return
+	}
+	b, err := h.CorePartUpload.Handle(fileSlice[0].Filename, fileSlice[0].Size, file)
+	if err != nil {
+		h.processError(ctx, err)
+		return
+	}
+	if !b {
+		ctx.SetStatusCode(http.StatusContinue)
+	}
+	ctx.SetStatusCode(http.StatusNoContent)
 }
 
 func (h *Handlers) processError(ctx *fasthttp.RequestCtx, err error) {
 	h.logger.Error().Println(err)
 	apiErr, ok := err.(port.HttpError)
 	if ok {
-		ctx.SetStatusCode(apiErr.GetCode())
-		ctx.SetBodyString(apiErr.Error())
+		code := apiErr.GetCode()
+		ctx.SetStatusCode(code)
+		if code >= http.StatusInternalServerError {
+			ctx.Request.SetBodyString("Internal server error")
+		} else {
+			ctx.SetBodyString(apiErr.Error())
+		}
 	} else {
 		ctx.SetStatusCode(http.StatusInternalServerError)
 		ctx.Request.SetBodyString("Internal server error")

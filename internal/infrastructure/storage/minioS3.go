@@ -84,6 +84,23 @@ func (m *MinioS3) ensureBucket(bucketName string) error {
 	return nil
 }
 
+func (m *MinioS3) putFileByReader(contentType, bucketName, fileName string, filesize int64, content io.Reader) error {
+	ctx, cancel := m.getContextTimeout()
+	defer cancel()
+	_, err := m.client.PutObject(
+		ctx,
+		bucketName,
+		fileName,
+		content,
+		filesize,
+		minio.PutObjectOptions{ContentType: contentType},
+	)
+	if err != nil {
+		return errors.Wrap(err, "MinioS3.putFile.PutObject")
+	}
+	return nil
+}
+
 func (m *MinioS3) putFile(contentType, bucketName, fileName string, content []byte) error {
 	ctx, cancel := m.getContextTimeout()
 	defer cancel()
@@ -136,8 +153,14 @@ func (m *MinioS3) GetMetaFile(fileName string) ([]byte, error) {
 	return content, nil
 }
 
-func (m *MinioS3) PutFilePart(fullPartName string, content []byte) error {
-	err := m.putFile("application/octet-stream", m.cfg.Buckets.Parts, fullPartName, content)
+func (m *MinioS3) PutFilePart(fullPartName string, filesize int64, content io.Reader) error {
+	err := m.putFileByReader(
+		"application/octet-stream",
+		m.cfg.Buckets.Parts,
+		fullPartName,
+		filesize,
+		content,
+	)
 	if err != nil {
 		return errors.Wrap(err, "MinioS3.PutFilePart")
 	}

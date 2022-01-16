@@ -2,6 +2,7 @@ package port
 
 import (
 	"context"
+	"io"
 	"net/url"
 	"time"
 )
@@ -33,4 +34,8 @@ type HttpError interface {
 
 type HandlerJson interface {
 	Handle(headers [][2]string, body []byte) ([]byte, error)
+}
+
+type HandlerMultipart interface {
+	Handle(string, int64, io.ReadCloser) (bool, error)
 }

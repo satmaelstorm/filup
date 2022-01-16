@@ -30,7 +30,7 @@ group Upload file
             FS -> BS: Retry callbackAfter N Times
             FS -> FS: Log critical error, if "Backend Server" don't Reponse with 2xx
         end
-        FS -> FA: Http code 200
+        FS -> FA: Http code 204
     else
         FS -> FA: Http code 100
     end

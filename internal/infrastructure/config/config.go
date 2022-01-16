@@ -83,13 +83,14 @@ func (q *QueueEngine) GetTimeout() time.Duration {
 }
 
 type Uploader struct {
-	InfoFieldName  string
-	ChunkLength    int64
-	UuidNodeId     string
-	CallbackBefore string
-	CallbackAfter  string
-	HttpTimeout    int64
-	HttpRetries    int
+	InfoFieldName   string
+	ChunkLength     int64
+	UuidNodeId      string
+	CallbackBefore  string
+	CallbackAfter   string
+	HttpTimeout     int64
+	HttpRetries     int
+	ComposerWorkers int
 
 	parsedCallbackBefore *url.URL
 	parsedCallbackAfter  *url.URL
@@ -130,6 +131,10 @@ func (u Uploader) GetOptPartSize() int64 {
 
 func (u Uploader) GetHttpRetries() int {
 	return u.HttpRetries
+}
+
+func (u Uploader) GetComposerWorkers() int {
+	return u.ComposerWorkers
 }
 
 func (u Uploader) AfterLoad() Uploader {
