@@ -28,6 +28,7 @@ func InitWebServer() (*web.Server, error) {
 		wire.Bind(new(port.HandlerMultipart), new(*domain.UploadParts)),
 		wire.Bind(new(port.CriticalLogger), new(*logsEngine.Loggers)),
 		wire.Bind(new(logsEngine.ILogger), new(*logsEngine.Loggers)),
+		wire.Bind(new(port.PartComposerRunner), new(*domain.PartsComposer)),
 
 		appctx.ProvideContext,
 		config.ProvideConfig,

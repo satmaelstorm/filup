@@ -15,14 +15,14 @@ type UploadParts struct {
 	storage     port.StoragePart
 	storageMeta port.StorageMeta
 
-	partsComposer *PartsComposer
+	partsComposer port.PartComposerRunner
 }
 
 func ProvideUploadParts(
 	cfg port.UploaderConfig,
 	storage port.StoragePart,
 	storageMeta port.StorageMeta,
-	composer *PartsComposer,
+	composer port.PartComposerRunner,
 ) *UploadParts {
 	up := new(UploadParts)
 	up.config = cfg

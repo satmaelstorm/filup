@@ -76,16 +76,16 @@ const (
 `
 )
 
-type fakeStorage struct {
+type fakeMetaStorage struct {
 	lastFilename string
 }
 
-func (f *fakeStorage) PutMetaFile(fileName string, content []byte) error {
+func (f *fakeMetaStorage) PutMetaFile(fileName string, content []byte) error {
 	f.lastFilename = fileName
 	return nil
 }
 
-func (f *fakeStorage) GetMetaFile(fileName string) ([]byte, error) {
+func (f *fakeMetaStorage) GetMetaFile(fileName string) ([]byte, error) {
 	return nil, nil
 }
 
@@ -117,7 +117,7 @@ func (s *suiteUploadMeta) SetupSuite() {
 
 	s.uploader = MetaUploader{
 		uploaderCfg:  cfg,
-		metaStorage:  &fakeStorage{},
+		metaStorage:  &fakeMetaStorage{},
 		poster:       fakePoster{},
 		UuidProvider: ProvideUuidProvider(),
 	}
@@ -255,7 +255,7 @@ func (s *suiteUploadMeta) TestPutMetaFile() {
 
 	err = s.uploader.putMetaFile(result.GetUUID(), metaContent)
 	s.Require().Nil(err)
-	fs := s.uploader.metaStorage.(*fakeStorage)
+	fs := s.uploader.metaStorage.(*fakeMetaStorage)
 	s.Equal(MetaFileName(im.uuid), fs.lastFilename)
 }
 
