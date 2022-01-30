@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"bytes"
 	"errors"
 	"github.com/satmaelstorm/filup/internal/domain/dto"
 	"github.com/satmaelstorm/filup/internal/domain/exceptions"
@@ -65,6 +66,17 @@ func (f *fakePartsComposerRunner) ClearMock() {
 	f.hasRun = false
 }
 
+type fakeReadCloser struct {
+}
+
+func (f *fakeReadCloser) Read(p []byte) (n int, err error) {
+	return 0, nil
+}
+
+func (f *fakeReadCloser) Close() error {
+	return nil
+}
+
 type suiteUploadParts struct {
 	suite.Suite
 	up *UploadParts
@@ -121,7 +133,6 @@ func (s *suiteUploadParts) TestExtractUuid() {
 }
 
 func (s *suiteUploadParts) TestLoadMetaSuccess() {
-
 	s.up.storageMeta.(*fakePartsMetaStorage).willReturn = []byte(testMeta)
 	r, err := s.up.loadMeta("31991bd9-8064-11ec-829b-e4e7494803df")
 	s.Require().Nil(err)
@@ -153,4 +164,88 @@ func (s *suiteUploadParts) TestLoadMetaFailByIncorrectJson() {
 	e, ok := err.(exceptions.ApiError)
 	s.Require().True(ok)
 	s.Equal(http.StatusInternalServerError, e.GetCode())
+}
+
+func (s *suiteUploadParts) TestCheckPart() {
+	uuid := "31991bd9-8064-11ec-829b-e4e7494803df"
+	s.up.storageMeta.(*fakePartsMetaStorage).willReturn = []byte(testMeta)
+	r, err := s.up.loadMeta(uuid)
+	s.Require().Nil(err)
+	err = s.up.checkPart(ChunkFileName(uuid, 0), 91, r)
+	s.Nil(err)
+
+	err = s.up.checkPart(ChunkFileName(uuid, 1), 91, r)
+	s.NotNil(err)
+	e, ok := err.(exceptions.ApiError)
+	s.Require().True(ok)
+	s.Equal(http.StatusBadRequest, e.GetCode())
+
+	err = s.up.checkPart(ChunkFileName(uuid, 0), 90, r)
+	s.NotNil(err)
+	e, ok = err.(exceptions.ApiError)
+	s.Require().True(ok)
+	s.Equal(http.StatusBadRequest, e.GetCode())
+}
+
+func (s *suiteUploadParts) TestSavePart() {
+	buf := new(bytes.Reader)
+	filename := ChunkFileName("31991bd9-8064-11ec-829b-e4e7494803df", 0)
+	err := s.up.savePart(filename, 91, buf)
+	s.Nil(err)
+
+	s.up.storage.(*fakePartsPartStorage).willError = errors.New("object size must be provided with disable multipart upload")
+	err = s.up.savePart(filename, 91, buf)
+	s.NotNil(err)
+}
+
+func (s *suiteUploadParts) TestCheckAllPartsNotComplete() {
+	uuid := "31991bd9-8064-11ec-829b-e4e7494803df"
+	s.up.storageMeta.(*fakePartsMetaStorage).willReturn = []byte(testMeta)
+	r, err := s.up.loadMeta(uuid)
+	s.Require().Nil(err)
+	complete, err := s.up.checkAllParts(r)
+	s.Require().Nil(err)
+	s.False(complete)
+}
+
+func (s *suiteUploadParts) TestCheckAllPartsComplete() {
+	uuid := "31991bd9-8064-11ec-829b-e4e7494803df"
+	s.up.storageMeta.(*fakePartsMetaStorage).willReturn = []byte(testMeta)
+	r, err := s.up.loadMeta(uuid)
+	s.Require().Nil(err)
+	s.up.storage.(*fakePartsPartStorage).willReturn = []string{ChunkFileName(uuid, 0)}
+	complete, err := s.up.checkAllParts(r)
+	s.Require().Nil(err)
+	s.True(complete)
+}
+
+func (s *suiteUploadParts) TestCheckAllPartsError() {
+	uuid := "31991bd9-8064-11ec-829b-e4e7494803df"
+	s.up.storageMeta.(*fakePartsMetaStorage).willReturn = []byte(testMeta)
+	r, err := s.up.loadMeta(uuid)
+	s.Require().Nil(err)
+	s.up.storage.(*fakePartsPartStorage).willError = errors.New("MinioS3.GetLoadedFilePartsNames")
+	complete, err := s.up.checkAllParts(r)
+	s.Require().NotNil(err)
+	s.False(complete)
+}
+
+func (s *suiteUploadParts) TestHandleNotComlete() {
+	uuid := "31991bd9-8064-11ec-829b-e4e7494803df"
+	s.up.storageMeta.(*fakePartsMetaStorage).willReturn = []byte(testMeta)
+	s.up.storage.(*fakePartsPartStorage).willReturn = []string{}
+
+	complete, err := s.up.Handle(ChunkFileName(uuid, 0), 91, new(fakeReadCloser))
+	s.Require().Nil(err)
+	s.False(complete)
+}
+
+func (s *suiteUploadParts) TestHandleComlete() {
+	uuid := "31991bd9-8064-11ec-829b-e4e7494803df"
+	s.up.storageMeta.(*fakePartsMetaStorage).willReturn = []byte(testMeta)
+	s.up.storage.(*fakePartsPartStorage).willReturn = []string{ChunkFileName(uuid, 0)}
+
+	complete, err := s.up.Handle(ChunkFileName(uuid, 0), 91, new(fakeReadCloser))
+	s.Require().Nil(err)
+	s.True(complete)
 }
