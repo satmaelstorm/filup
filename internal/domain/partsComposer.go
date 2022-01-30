@@ -2,30 +2,43 @@ package domain
 
 import (
 	"context"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"github.com/satmaelstorm/filup/internal/domain/dto"
 	"github.com/satmaelstorm/filup/internal/domain/port"
+	"net/url"
+	"strconv"
+	"strings"
 )
 
 type PartsComposer struct {
 	storage port.PartsComposer
+	cleaner port.StorageCleaner
 	cfg     port.UploaderConfig
 	in      chan dto.UploaderStartResult
-	logger  port.CriticalLogger
+	logger  port.Logger
+	poster  port.Poster
+	ctx     context.Context
 }
 
 func ProvidePartsComposer(
 	ctx port.ContextProvider,
 	storage port.PartsComposer,
+	cleaner port.StorageCleaner,
 	cfg port.UploaderConfig,
-	logger port.CriticalLogger,
+	logger port.Logger,
+	poster port.Poster,
 ) *PartsComposer {
 	pc := new(PartsComposer)
 	pc.storage = storage
 	pc.cfg = cfg
 	pc.in = make(chan dto.UploaderStartResult, cfg.GetComposerWorkers()*2)
 	pc.logger = logger
+	pc.poster = poster
+	pc.ctx = ctx.Ctx()
+	pc.cleaner = cleaner
 
-	pc.runWorkers(ctx.Ctx())
+	pc.runWorkers(pc.ctx)
 
 	return pc
 }
@@ -62,8 +75,50 @@ func (pc *PartsComposer) process(metaInfo dto.UploaderStartResult) {
 		metaInfo.GetUserTags(),
 	)
 	if err != nil {
-		pc.logger.Critical().Println(err)
+		pc.logger.Critical().Println(errors.Wrap(err, "PartsComposer.process()"))
 	}
-	//TODO callbacks
-	//TODO add cleaner
+	if callbackAfter := pc.cfg.GetCallbackAfter(); callbackAfter != nil {
+		pc.processCallbackAfter(callbackAfter, metaInfo) //TODO make async?
+	}
+	err = pc.cleaner.RemoveMeta(MetaFileName(metaInfo.GetUUID()))
+	if err != nil {
+		pc.logger.Error().Println(errors.Wrap(err, "PartsComposer.process()"))
+	}
+	err = pc.cleaner.RemoveParts(partsNames)
+	if err != nil {
+		pc.logger.Error().Println(errors.Wrap(err, "PartsComposer.process()"))
+	}
+}
+
+func (pc *PartsComposer) processCallbackAfter(callbackAfter *url.URL, metaInfo dto.UploaderStartResult) {
+	body, err := jsoniter.Marshal(metaInfo)
+	if err != nil {
+		pc.logger.Critical().Println(errors.Wrap(err, "PartsComposer.processCallbackAfter()"))
+		return
+	}
+	retires := 0
+	totalRetires := pc.cfg.GetHttpRetries()
+	var allErrors []string
+	for retires < totalRetires {
+		_, code, err := pc.poster.Post(pc.ctx, *callbackAfter, pc.cfg.GetHttpTimeout(), body)
+		if err == nil && (code >= 200 && code <= 299) {
+			return
+		}
+		retires++
+		if err != nil {
+			e := errors.Wrap(err, "PartsComposer.processCallbackAfter().poster.error")
+			pc.logger.Error().Println(e)
+			allErrors = append(allErrors, e.Error())
+			continue
+		}
+		if code < 200 || code > 299 {
+			e := errors.Wrap(err, "PartsComposer.processCallbackAfter().poster.code_"+strconv.Itoa(code))
+			pc.logger.Error().Println(e)
+			allErrors = append(allErrors, e.Error())
+			continue
+		}
+	}
+	pc.logger.Critical().Println("CallbackAfter " + callbackAfter.String() +
+		" Error after " + strconv.Itoa(totalRetires) + " with body " + string(body) +
+		" with errors [" + strings.Join(allErrors, ",") + "]")
 }

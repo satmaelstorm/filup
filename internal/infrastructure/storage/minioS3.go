@@ -9,6 +9,7 @@ import (
 	"github.com/satmaelstorm/filup/internal/domain/port"
 	"github.com/satmaelstorm/filup/internal/infrastructure/config"
 	"io"
+	"strings"
 )
 
 type MinioS3 struct {
@@ -207,6 +208,33 @@ func (m *MinioS3) ComposeFileParts(destFileName string, fullPartsName []string, 
 		size:   ui.Size,
 	}
 	return result, nil
+}
+
+func (m *MinioS3) RemoveMeta(fileName string) error {
+	ctx, cancel := m.getContextTimeout()
+	defer cancel()
+	err := m.client.RemoveObject(ctx, m.cfg.Buckets.Meta, fileName, minio.RemoveObjectOptions{ForceDelete: true, GovernanceBypass: true})
+	if err != nil {
+		return errors.Wrap(err, "MinioS3.RemoveMeta")
+	}
+	return nil
+}
+
+func (m *MinioS3) RemoveParts(chunkNames []string) error {
+	ctx, cancel := m.getContextTimeout()
+	defer cancel()
+	var errs []string
+	opts := minio.RemoveObjectOptions{ForceDelete: true, GovernanceBypass: true}
+	for _, name := range chunkNames {
+		err := m.client.RemoveObject(ctx, m.cfg.Buckets.Parts, name, opts)
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
+	}
+	if len(errs) > 0 {
+		return errors.New("MinioS3.RemoveParts: [" + strings.Join(errs, ",") + "]")
+	}
+	return nil
 }
 
 type ComposeResult struct {

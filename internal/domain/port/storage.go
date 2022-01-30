@@ -2,6 +2,11 @@ package port
 
 import "io"
 
+type StorageCleaner interface {
+	RemoveMeta(fileName string) error
+	RemoveParts(partsNames []string) error
+}
+
 type StorageMeta interface {
 	PutMetaFile(fileName string, content []byte) error
 	GetMetaFile(fileName string) ([]byte, error)

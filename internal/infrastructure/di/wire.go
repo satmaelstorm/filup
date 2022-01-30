@@ -23,10 +23,11 @@ func InitWebServer() (*web.Server, error) {
 		wire.Bind(new(port.StorageMeta), new(*storage.MinioS3)),
 		wire.Bind(new(port.StoragePart), new(*storage.MinioS3)),
 		wire.Bind(new(port.PartsComposer), new(*storage.MinioS3)),
+		wire.Bind(new(port.StorageCleaner), new(*storage.MinioS3)),
 		wire.Bind(new(port.Poster), new(*web.RequestHelpers)),
 		wire.Bind(new(port.HandlerJson), new(*domain.MetaUploader)),
 		wire.Bind(new(port.HandlerMultipart), new(*domain.UploadParts)),
-		wire.Bind(new(port.CriticalLogger), new(*logsEngine.Loggers)),
+		wire.Bind(new(port.Logger), new(*logsEngine.Loggers)),
 		wire.Bind(new(logsEngine.ILogger), new(*logsEngine.Loggers)),
 		wire.Bind(new(port.PartComposerRunner), new(*domain.PartsComposer)),
 
