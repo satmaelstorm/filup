@@ -20,6 +20,7 @@ type Configuration struct {
 	Queue    QueueEngine
 	Logs     logsEngine.LogConfigs
 	Uploader Uploader
+	Caches   CachesConfig
 }
 
 func (c *Configuration) AfterLoad() {
@@ -135,6 +136,14 @@ func (u Uploader) GetHttpRetries() int {
 
 func (u Uploader) GetComposerWorkers() int {
 	return u.ComposerWorkers
+}
+
+type CachesConfig struct {
+	Parts CacheConfig
+}
+
+type CacheConfig struct {
+	Size int
 }
 
 func (u Uploader) AfterLoad() Uploader {

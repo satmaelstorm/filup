@@ -9,6 +9,7 @@ package di
 import (
 	"github.com/satmaelstorm/filup/internal/domain"
 	"github.com/satmaelstorm/filup/internal/infrastructure/appctx"
+	"github.com/satmaelstorm/filup/internal/infrastructure/cache"
 	"github.com/satmaelstorm/filup/internal/infrastructure/config"
 	"github.com/satmaelstorm/filup/internal/infrastructure/logs"
 	"github.com/satmaelstorm/filup/internal/infrastructure/storage"
@@ -24,7 +25,11 @@ func InitWebServer() (*web.Server, error) {
 	configuration := config.ProvideConfig()
 	loggers := logs.ProvideLoggers(configuration)
 	uploaderConfig := config.ProvideUploaderConfig()
-	minioS3, err := storage.ProvideMinioS3(configuration, coreContext)
+	cacheCache, err := cache.ProvideMetaCache(configuration, loggers)
+	if err != nil {
+		return nil, err
+	}
+	minioS3, err := storage.ProvideMinioS3(configuration, coreContext, cacheCache)
 	if err != nil {
 		return nil, err
 	}

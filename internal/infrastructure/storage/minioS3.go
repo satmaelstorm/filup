@@ -13,14 +13,15 @@ import (
 )
 
 type MinioS3 struct {
-	client *minio.Client
-	cfg    config.S3Config
-	ctx    context.Context
+	client    *minio.Client
+	cfg       config.S3Config
+	ctx       context.Context
+	metaCache port.MetaCacheController
 }
 
 var storageClient *MinioS3
 
-func ProvideMinioS3(cfg config.Configuration, cc port.ContextProvider) (*MinioS3, error) {
+func ProvideMinioS3(cfg config.Configuration, cc port.ContextProvider, cache port.MetaCacheController) (*MinioS3, error) {
 	if nil == storageClient {
 		storageClient = new(MinioS3)
 		storageClient.cfg = cfg.Storage.S3
@@ -41,6 +42,7 @@ func ProvideMinioS3(cfg config.Configuration, cc port.ContextProvider) (*MinioS3
 		if err != nil {
 			return nil, err
 		}
+		storageClient.metaCache = cache
 	}
 	return storageClient, nil
 }
@@ -143,10 +145,15 @@ func (m *MinioS3) PutMetaFile(fileName string, content []byte) error {
 	if err != nil {
 		return errors.Wrap(err, "PutMetaFile")
 	}
+	m.metaCache.Add(fileName, content)
 	return nil
 }
 
 func (m *MinioS3) GetMetaFile(fileName string) ([]byte, error) {
+	content, ok := m.metaCache.Get(fileName)
+	if ok && nil != content {
+		return content, nil
+	}
 	content, err := m.getFile(m.cfg.Buckets.Meta, fileName)
 	if err != nil {
 		return nil, errors.Wrap(err, "GetMetaFile")

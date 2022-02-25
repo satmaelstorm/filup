@@ -8,6 +8,7 @@ import (
 	"github.com/satmaelstorm/filup/internal/domain"
 	"github.com/satmaelstorm/filup/internal/domain/port"
 	"github.com/satmaelstorm/filup/internal/infrastructure/appctx"
+	"github.com/satmaelstorm/filup/internal/infrastructure/cache"
 	"github.com/satmaelstorm/filup/internal/infrastructure/config"
 	"github.com/satmaelstorm/filup/internal/infrastructure/logs"
 	"github.com/satmaelstorm/filup/internal/infrastructure/logs/logsEngine"
@@ -30,10 +31,12 @@ func InitWebServer() (*web.Server, error) {
 		wire.Bind(new(port.Logger), new(*logsEngine.Loggers)),
 		wire.Bind(new(logsEngine.ILogger), new(*logsEngine.Loggers)),
 		wire.Bind(new(port.PartComposerRunner), new(*domain.PartsComposer)),
+		wire.Bind(new(port.MetaCacheController), new(*cache.Cache)),
 
 		appctx.ProvideContext,
 		config.ProvideConfig,
 		config.ProvideUploaderConfig,
+		cache.ProvideMetaCache,
 		logs.ProvideLoggers,
 		routes.ProvideRoutes,
 		web.ProvideWebServer,

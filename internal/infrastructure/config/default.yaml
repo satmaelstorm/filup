@@ -43,6 +43,10 @@ uploader:
   httpRetries: 3
   composerWorkers: 5
 
+caches:
+  parts:
+    size: 100
+
 queue:
   type: "nats"
   uri: "nats://localhost:4222"
