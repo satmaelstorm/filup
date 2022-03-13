@@ -26,6 +26,10 @@ func (c *Cache) Add(key string, value []byte) {
 	c.controller.Add(key, value)
 }
 
+func (c *Cache) Delete(key string) {
+	c.controller.Remove(key)
+}
+
 func (c *Cache) Get(key string) ([]byte, bool) {
 	v, ok := c.controller.Get(key)
 	if !ok {

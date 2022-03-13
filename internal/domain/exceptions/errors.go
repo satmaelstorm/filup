@@ -1,7 +1,5 @@
 package exceptions
 
-import "errors"
-
 type ApiError struct {
 	err  error
 	code int
@@ -19,9 +17,9 @@ func (a ApiError) GetErr() error {
 	return a.err
 }
 
-func NewApiError(code int, msg string) ApiError {
+func NewApiError(code int, err error) ApiError {
 	return ApiError{
-		err:  errors.New(msg),
+		err:  err,
 		code: code,
 	}
 }

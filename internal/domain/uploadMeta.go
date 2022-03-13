@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"github.com/satmaelstorm/filup/internal/domain/dto"
 	"github.com/satmaelstorm/filup/internal/domain/exceptions"
 	"github.com/satmaelstorm/filup/internal/domain/port"
@@ -82,7 +83,7 @@ func (m *MetaUploader) Handle(headers [][2]string, body []byte) ([]byte, error) 
 func (m *MetaUploader) renderMetaContent(chunks dto.UploaderStartResult) ([]byte, error) {
 	content, err := jsoniter.Marshal(chunks)
 	if err != nil {
-		return nil, exceptions.NewApiError(http.StatusInternalServerError, err.Error())
+		return nil, exceptions.NewApiError(http.StatusInternalServerError, err)
 	}
 	return content, nil
 }
@@ -90,7 +91,7 @@ func (m *MetaUploader) renderMetaContent(chunks dto.UploaderStartResult) ([]byte
 func (m *MetaUploader) putMetaFile(uuid string, content []byte) error {
 	err := m.metaStorage.PutMetaFile(MetaFileName(uuid), content)
 	if err != nil {
-		return exceptions.NewApiError(http.StatusInternalServerError, err.Error())
+		return exceptions.NewApiError(http.StatusInternalServerError, err)
 	}
 	return nil
 }
@@ -101,10 +102,10 @@ func (m *MetaUploader) postBeforeUpload(headers [][2]string, body []byte) error 
 	}
 	httpResult, httpCode, err := m.poster.Post(m.ctx, *m.uploaderCfg.GetCallbackBefore(), m.uploaderCfg.GetHttpTimeout(), body, headers...)
 	if err != nil {
-		return exceptions.NewApiError(http.StatusBadGateway, "Post error: "+err.Error())
+		return exceptions.NewApiError(http.StatusBadGateway, errors.Wrap(err, "Post error"))
 	}
 	if httpCode < 200 || httpCode > 299 {
-		return exceptions.NewApiError(httpCode, string(httpResult))
+		return exceptions.NewApiError(httpCode, errors.New(string(httpResult)))
 	}
 	return nil
 }
@@ -112,7 +113,7 @@ func (m *MetaUploader) postBeforeUpload(headers [][2]string, body []byte) error 
 func (m *MetaUploader) addUuidToBody(body []byte, uid string) ([]byte, error) {
 	newBody, err := sjson.SetBytes(body, m.uploaderCfg.GetInfoFieldName()+".uuid", uid)
 	if err != nil {
-		return body, exceptions.NewApiError(http.StatusInternalServerError, err.Error())
+		return body, exceptions.NewApiError(http.StatusInternalServerError, err)
 	}
 	return newBody, nil
 }
@@ -120,11 +121,11 @@ func (m *MetaUploader) addUuidToBody(body []byte, uid string) ([]byte, error) {
 func (m *MetaUploader) addChunksToBody(body []byte, chunks dto.UploaderStartResult) ([]byte, error) {
 	addJson, err := jsoniter.Marshal(chunks)
 	if err != nil {
-		return nil, exceptions.NewApiError(http.StatusInternalServerError, err.Error())
+		return nil, exceptions.NewApiError(http.StatusInternalServerError, err)
 	}
 	newBody, err := sjson.SetRawBytes(body, m.uploaderCfg.GetInfoFieldName()+".chunks_info", addJson)
 	if err != nil {
-		return nil, exceptions.NewApiError(http.StatusInternalServerError, err.Error())
+		return nil, exceptions.NewApiError(http.StatusInternalServerError, err)
 	}
 	return newBody, nil
 }
@@ -162,15 +163,15 @@ func (m *MetaUploader) extractParams(body []byte) (innerMeta, error) {
 	im := innerMeta{}
 	uploaderInfo := gjson.GetBytes(body, m.uploaderCfg.GetInfoFieldName())
 	if !uploaderInfo.Exists() {
-		return im, exceptions.NewApiError(http.StatusBadRequest, "field "+m.uploaderCfg.GetInfoFieldName()+" is required!")
+		return im, exceptions.NewApiError(http.StatusBadRequest, errors.New("field "+m.uploaderCfg.GetInfoFieldName()+" is required!"))
 	}
 	fs := uploaderInfo.Get("file_size")
 	if !fs.Exists() {
-		return im, exceptions.NewApiError(http.StatusBadRequest, "field "+m.uploaderCfg.GetInfoFieldName()+".file_size is required!")
+		return im, exceptions.NewApiError(http.StatusBadRequest, errors.New("field "+m.uploaderCfg.GetInfoFieldName()+".file_size is required!"))
 	}
 	fileSize := fs.Int()
 	if fileSize < 1 {
-		return im, exceptions.NewApiError(http.StatusBadRequest, "field "+m.uploaderCfg.GetInfoFieldName()+".file_size must be greater than 0")
+		return im, exceptions.NewApiError(http.StatusBadRequest, errors.New("field "+m.uploaderCfg.GetInfoFieldName()+".file_size must be greater than 0"))
 	}
 	im.size = fileSize
 	uid := uploaderInfo.Get("uuid")

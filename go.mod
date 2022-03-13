@@ -6,6 +6,7 @@ require (
 	github.com/fasthttp/router v1.4.4
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
+	github.com/hashicorp/golang-lru v0.5.4
 	github.com/json-iterator/go v1.1.12
 	github.com/klauspost/cpuid v1.3.1
 	github.com/minio/minio-go/v7 v7.0.18
@@ -27,7 +28,6 @@ require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/klauspost/compress v1.13.5 // indirect

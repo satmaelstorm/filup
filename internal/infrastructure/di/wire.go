@@ -32,6 +32,8 @@ func InitWebServer() (*web.Server, error) {
 		wire.Bind(new(logsEngine.ILogger), new(*logsEngine.Loggers)),
 		wire.Bind(new(port.PartComposerRunner), new(*domain.PartsComposer)),
 		wire.Bind(new(port.MetaCacheController), new(*cache.Cache)),
+		wire.Bind(new(port.FileStreamer), new(*storage.MinioS3)),
+		wire.Bind(new(port.HandlerStreamer), new(*domain.FileDownloader)),
 
 		appctx.ProvideContext,
 		config.ProvideConfig,
@@ -47,6 +49,7 @@ func InitWebServer() (*web.Server, error) {
 		domain.ProvideUuidProvider,
 		domain.ProvideUploadParts,
 		domain.ProvidePartsComposer,
+		domain.ProvideFileDownloader,
 	)
 	return &web.Server{}, nil
 }

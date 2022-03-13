@@ -140,6 +140,18 @@ func (m *MinioS3) getFile(bucketName, fileName string) ([]byte, error) {
 	return buf, nil
 }
 
+func (m *MinioS3) GetFileStream(fileName string) (io.ReadCloser, port.FileInfo, error) {
+	object, err := m.client.GetObject(m.ctx, m.cfg.Buckets.Final, fileName, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "MinioS3.getFile.GetObject")
+	}
+	stat, err := object.Stat()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "MinioS3.getFile.ObjectStat")
+	}
+	return object, FileInfo{size: stat.Size, contentType: stat.ContentType}, nil
+}
+
 func (m *MinioS3) PutMetaFile(fileName string, content []byte) error {
 	err := m.putFile("text/plain", m.cfg.Buckets.Meta, fileName, content)
 	if err != nil {
@@ -224,6 +236,7 @@ func (m *MinioS3) RemoveMeta(fileName string) error {
 	if err != nil {
 		return errors.Wrap(err, "MinioS3.RemoveMeta")
 	}
+	m.metaCache.Delete(fileName)
 	return nil
 }
 
@@ -260,4 +273,17 @@ func (c ComposeResult) GetName() string {
 
 func (c ComposeResult) GetSize() int64 {
 	return c.size
+}
+
+type FileInfo struct {
+	contentType string
+	size        int64
+}
+
+func (fi FileInfo) GetSize() int64 {
+	return fi.size
+}
+
+func (fi FileInfo) GetContentType() string {
+	return fi.contentType
 }

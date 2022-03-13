@@ -1,6 +1,7 @@
 package port
 
 import (
+	"bufio"
 	"context"
 	"io"
 	"net/url"
@@ -38,4 +39,8 @@ type HandlerJson interface {
 
 type HandlerMultipart interface {
 	Handle(string, int64, io.ReadCloser) (bool, error)
+}
+
+type HandlerStreamer interface {
+	GetStreamer(fileName string) (func(writer *bufio.Writer), FileInfo, error)
 }
