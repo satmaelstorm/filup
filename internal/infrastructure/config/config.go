@@ -84,18 +84,20 @@ func (q *QueueEngine) GetTimeout() time.Duration {
 }
 
 type Uploader struct {
-	InfoFieldName   string
-	ChunkLength     int64
-	UuidNodeId      string
-	CallbackBefore  string
-	CallbackAfter   string
-	HttpTimeout     int64
-	HttpRetries     int
-	ComposerWorkers int
+	InfoFieldName    string
+	ChunkLength      int64
+	UuidNodeId       string
+	CallbackBefore   string
+	CallbackAfter    string
+	CallbackDownload string
+	HttpTimeout      int64
+	HttpRetries      int
+	ComposerWorkers  int
 
-	parsedCallbackBefore *url.URL
-	parsedCallbackAfter  *url.URL
-	httpTimeout          time.Duration
+	parsedCallbackBefore   *url.URL
+	parsedCallbackAfter    *url.URL
+	parsedCallbackDownload *url.URL
+	httpTimeout            time.Duration
 }
 
 func (u Uploader) GetHttpTimeout() time.Duration {
@@ -108,6 +110,10 @@ func (u Uploader) GetCallbackBefore() *url.URL {
 
 func (u Uploader) GetCallbackAfter() *url.URL {
 	return u.parsedCallbackAfter
+}
+
+func (u Uploader) GetCallbackDownload() *url.URL {
+	return u.parsedCallbackDownload
 }
 
 func (u Uploader) GetChunkLength() int64 {
@@ -176,6 +182,13 @@ func (u Uploader) AfterLoad() Uploader {
 		u.parsedCallbackAfter, err = url.Parse(u.CallbackAfter)
 		if err != nil {
 			panic("error in Uploader.AfterLoad() while parse CallbackAfter: " + err.Error())
+		}
+	}
+
+	if u.CallbackDownload != "" {
+		u.parsedCallbackDownload, err = url.Parse(u.CallbackDownload)
+		if err != nil {
+			panic("error in Uploader.AfterLoad() while parse CallbackDownload: " + err.Error())
 		}
 	}
 

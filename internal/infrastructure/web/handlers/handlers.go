@@ -83,7 +83,7 @@ func (h *Handlers) DownloadFile(ctx *fasthttp.RequestCtx) {
 		ctx.Response.SetBodyString("Invalid file name")
 		return
 	}
-	streamer, info, err := h.CoreFileStreamer.GetStreamer(fileName)
+	streamer, info, err := h.CoreFileStreamer.GetStreamer(h.processHeaders(&ctx.Request.Header), fileName)
 	if err != nil {
 		h.processError(ctx, err)
 		return

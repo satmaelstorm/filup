@@ -10,6 +10,7 @@ type UploaderConfig interface {
 	GetChunkLength() int64
 	GetCallbackBefore() *url.URL
 	GetCallbackAfter() *url.URL
+	GetCallbackDownload() *url.URL
 	GetHttpTimeout() time.Duration
 	GetHttpRetries() int
 	GetComposerWorkers() int

@@ -42,5 +42,5 @@ type HandlerMultipart interface {
 }
 
 type HandlerStreamer interface {
-	GetStreamer(fileName string) (func(writer *bufio.Writer), FileInfo, error)
+	GetStreamer(headers [][2]string, fileName string) (func(writer *bufio.Writer), FileInfo, error)
 }
