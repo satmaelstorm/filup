@@ -3,11 +3,11 @@
 Upload big files directly to S3-compatible storage. Support chunked upload. Cloud native.
 
 ## Roadmap
-v0.0.1 - base functions: upload files with multipart\form-data, callbacks, download files by uuid
+v0.1 - base functions: upload files with multipart\form-data, callbacks, download files by uuid
 
-v0.0.2 - add upload metrics
+v0.2 - add upload metrics
 
-v0.0.3 - add upload by WebSockets
+v0.3 - add upload by WebSockets
 
 ## Base upload flow
 

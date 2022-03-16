@@ -2,6 +2,7 @@ package domain
 
 import (
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"github.com/satmaelstorm/filup/internal/domain/dto"
 	"github.com/satmaelstorm/filup/internal/domain/exceptions"
 	"github.com/satmaelstorm/filup/internal/domain/port"
@@ -71,7 +72,7 @@ func (up *UploadParts) extractUuid(filename string) (string, error) {
 		return "", err
 	}
 	if !IsCorrectUuid(uuid) {
-		return "", exceptions.NewApiError(http.StatusBadRequest, "incorrect part name - must start with uuid")
+		return "", exceptions.NewApiError(http.StatusBadRequest, errors.New("incorrect part name - must start with uuid"))
 	}
 	return uuid, nil
 }
@@ -80,15 +81,15 @@ func (up *UploadParts) loadMeta(uuid string) (dto.UploaderStartResult, error) {
 	//TODO add inmemory cache
 	metaInfoBytes, err := up.storageMeta.GetMetaFile(MetaFileName(uuid))
 	if err != nil { //TODO process known errors to StatusBadRequest
-		return dto.UploaderStartResult{}, exceptions.NewApiError(http.StatusInternalServerError, "error in meta storage: "+err.Error())
+		return dto.UploaderStartResult{}, exceptions.NewApiError(http.StatusInternalServerError, errors.Wrap(err, "error in meta storage"))
 	}
 	if len(metaInfoBytes) < 1 {
-		return dto.UploaderStartResult{}, exceptions.NewApiError(http.StatusBadRequest, "incorrect part file name: upload not started")
+		return dto.UploaderStartResult{}, exceptions.NewApiError(http.StatusBadRequest, errors.New("incorrect part file name: upload not started"))
 	}
 	var metaInfo dto.UploaderStartResult
 	err = jsoniter.Unmarshal(metaInfoBytes, &metaInfo)
 	if err != nil {
-		return dto.UploaderStartResult{}, exceptions.NewApiError(http.StatusInternalServerError, "error while deserialize meta: "+err.Error())
+		return dto.UploaderStartResult{}, exceptions.NewApiError(http.StatusInternalServerError, errors.Wrap(err, "error while deserialize meta"))
 	}
 	return metaInfo, nil
 }
@@ -96,11 +97,11 @@ func (up *UploadParts) loadMeta(uuid string) (dto.UploaderStartResult, error) {
 func (up *UploadParts) checkPart(filename string, filesize int64, metaInfo dto.UploaderStartResult) error {
 	part, ok := metaInfo.GetChunks()[filename]
 	if !ok {
-		return exceptions.NewApiError(http.StatusBadRequest, "incorrect part file name: no part with this name in upload")
+		return exceptions.NewApiError(http.StatusBadRequest, errors.New("incorrect part file name: no part with this name in upload"))
 	}
 	if filesize != part.GetSize() {
 		return exceptions.NewApiError(http.StatusBadRequest,
-			"incorrect part: incorrect size, must be "+strconv.Itoa(int(part.GetSize()))+" bytes but got "+strconv.Itoa(int(filesize))+" bytes")
+			errors.New("incorrect part: incorrect size, must be "+strconv.Itoa(int(part.GetSize()))+" bytes but got "+strconv.Itoa(int(filesize))+" bytes"))
 	}
 	return nil
 }
@@ -108,7 +109,7 @@ func (up *UploadParts) checkPart(filename string, filesize int64, metaInfo dto.U
 func (up *UploadParts) savePart(filename string, filesize int64, file io.Reader) error {
 	err := up.storage.PutFilePart(filename, filesize, file)
 	if err != nil {
-		return exceptions.NewApiError(http.StatusInternalServerError, err.Error())
+		return exceptions.NewApiError(http.StatusInternalServerError, err)
 	}
 	return nil
 }
@@ -116,7 +117,7 @@ func (up *UploadParts) savePart(filename string, filesize int64, file io.Reader)
 func (up *UploadParts) checkAllParts(metaInfo dto.UploaderStartResult) (bool, error) {
 	list, err := up.storage.GetLoadedFilePartsNames(metaInfo.GetUUID())
 	if err != nil {
-		return false, exceptions.NewApiError(http.StatusInternalServerError, err.Error())
+		return false, exceptions.NewApiError(http.StatusInternalServerError, err)
 	}
 	mapList := make(map[string]bool, len(list))
 	for _, fn := range list {

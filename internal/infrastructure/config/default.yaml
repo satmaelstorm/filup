@@ -39,6 +39,7 @@ uploader:
   chunkLength: 52428800 #50Mb
   callbackBefore:
   callbackAfter:
+  callbackDownload:
   httpTimeout: 5
   httpRetries: 3
   composerWorkers: 5

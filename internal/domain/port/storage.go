@@ -26,3 +26,12 @@ type PartsComposerResult interface {
 	GetName() string
 	GetSize() int64
 }
+
+type FileInfo interface {
+	GetSize() int64
+	GetContentType() string
+}
+
+type FileStreamer interface {
+	GetFileStream(fileName string) (stream io.ReadCloser, info FileInfo, err error)
+}

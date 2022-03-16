@@ -38,7 +38,8 @@ func InitWebServer() (*web.Server, error) {
 	metaUploader := domain.ProvideMetaUploader(coreContext, uploaderConfig, minioS3, uuidProvider, requestHelpers)
 	partsComposer := domain.ProvidePartsComposer(coreContext, minioS3, minioS3, uploaderConfig, loggers, requestHelpers)
 	uploadParts := domain.ProvideUploadParts(uploaderConfig, minioS3, minioS3, partsComposer)
-	handlersHandlers := handlers.ProvideHandlers(loggers, metaUploader, uploadParts)
+	fileDownloader := domain.ProvideFileDownloader(coreContext, uploaderConfig, minioS3, requestHelpers, loggers)
+	handlersHandlers := handlers.ProvideHandlers(loggers, metaUploader, uploadParts, fileDownloader)
 	router := routes.ProvideRoutes(handlersHandlers, loggers)
 	server := web.ProvideWebServer(coreContext, router, configuration, loggers)
 	return server, nil

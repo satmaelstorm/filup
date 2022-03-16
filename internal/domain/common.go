@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"github.com/satmaelstorm/filup/internal/domain/exceptions"
 	"net/http"
 	"regexp"
@@ -34,7 +35,7 @@ func MetaFileName(uid string) string {
 func ExtractUuidFromPartName(fn string) (string, error) {
 	pos := strings.Index(fn, partFilenamePiece)
 	if pos < 32 {
-		return "", exceptions.NewApiError(http.StatusBadRequest, "incorrect part name")
+		return "", exceptions.NewApiError(http.StatusBadRequest, errors.New("incorrect part name"))
 	}
 	return fn[:pos], nil
 }
