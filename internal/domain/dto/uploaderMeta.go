@@ -1,8 +1,9 @@
 package dto
 
 type UploaderChunk struct {
-	Size int64  `json:"size"`
-	Name string `json:"name"`
+	Offset int64  `json:"offset"`
+	Size   int64  `json:"size"`
+	Name   string `json:"name"`
 }
 
 func (c UploaderChunk) GetSize() int64 {
@@ -13,10 +14,15 @@ func (c UploaderChunk) GetName() string {
 	return c.Name
 }
 
-func NewUploaderChunk(name string, size int64) UploaderChunk {
+func (c UploaderChunk) GetOffset() int64 {
+	return c.Offset
+}
+
+func NewUploaderChunk(name string, size int64, offset int64) UploaderChunk {
 	return UploaderChunk{
-		Size: size,
-		Name: name,
+		Offset: offset,
+		Size:   size,
+		Name:   name,
 	}
 }
 

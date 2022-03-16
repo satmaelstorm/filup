@@ -210,6 +210,7 @@ func (s *suiteUploadMeta) TestPrepareChunks() {
 	s.Require().Contains(result.GetChunks(), chunkFileName0)
 	s.Equal(int64(1024*1024*4), result.GetChunks()[chunkFileName0].GetSize())
 	s.Equal(ChunkFileName(uid, 0), result.GetChunks()[chunkFileName0].GetName())
+	s.Equal(int64(0), result.GetChunks()[chunkFileName0].GetOffset())
 	s.Equal(int64(1024*1024*4), result.GetSize())
 	s.Require().Equal(len(im.userTags), len(result.GetUserTags()))
 	s.Require().Contains(result.GetUserTags(), "tag1")
@@ -222,7 +223,9 @@ func (s *suiteUploadMeta) TestPrepareChunks() {
 	s.Require().Contains(result.GetChunks(), chunkFileName0)
 	s.Require().Contains(result.GetChunks(), chunkFileName7)
 	s.Equal(s.uploader.uploaderCfg.GetChunkLength(), result.GetChunks()[chunkFileName0].GetSize())
+	s.Equal(int64(0), result.GetChunks()[chunkFileName0].GetOffset())
 	s.Equal(int64(1024*1024), result.GetChunks()[chunkFileName7].GetSize())
+	s.Equal(int64(1024*1024*35), result.GetChunks()[chunkFileName7].GetOffset())
 	s.Equal(im.size, result.GetSize())
 }
 

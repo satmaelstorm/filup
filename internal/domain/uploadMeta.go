@@ -136,7 +136,7 @@ func (m *MetaUploader) prepareChunks(im innerMeta) dto.UploaderStartResult {
 		chunkFileName := ChunkFileName(im.uuid, 0)
 		return dto.NewUploaderStartResult(
 			im.uuid,
-			map[string]dto.UploaderChunk{chunkFileName: dto.NewUploaderChunk(chunkFileName, im.size)},
+			map[string]dto.UploaderChunk{chunkFileName: dto.NewUploaderChunk(chunkFileName, im.size, 0)},
 			im.size,
 			im.userTags,
 		)
@@ -149,11 +149,11 @@ func (m *MetaUploader) prepareChunks(im innerMeta) dto.UploaderStartResult {
 
 	for i := int64(0); i < chunksCnt; i++ {
 		chunkFileName := ChunkFileName(im.uuid, int(i))
-		chunks[chunkFileName] = dto.NewUploaderChunk(chunkFileName, chunkSize)
+		chunks[chunkFileName] = dto.NewUploaderChunk(chunkFileName, chunkSize, i*chunkSize)
 	}
 
 	chunkFileName := ChunkFileName(im.uuid, int(chunksCnt))
-	chunks[chunkFileName] = dto.NewUploaderChunk(chunkFileName, lastSize)
+	chunks[chunkFileName] = dto.NewUploaderChunk(chunkFileName, lastSize, im.size-lastSize)
 
 	return dto.NewUploaderStartResult(im.uuid, chunks, im.size, im.userTags)
 }

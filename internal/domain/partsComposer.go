@@ -7,6 +7,7 @@ import (
 	"github.com/satmaelstorm/filup/internal/domain/dto"
 	"github.com/satmaelstorm/filup/internal/domain/port"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -64,11 +65,25 @@ func (pc *PartsComposer) worker(ctx context.Context, in <-chan dto.UploaderStart
 	}
 }
 
-func (pc *PartsComposer) process(metaInfo dto.UploaderStartResult) {
+func (pc *PartsComposer) getChunksSlice(metaInfo dto.UploaderStartResult) []string {
 	partsNames := make([]string, 0, len(metaInfo.GetChunks()))
-	for pn, _ := range metaInfo.GetChunks() {
-		partsNames = append(partsNames, pn)
+	chunksSorted := make([]dto.UploaderChunk, len(metaInfo.GetChunks()))
+	i := 0
+	for _, chunk := range metaInfo.GetChunks() {
+		chunksSorted[i] = chunk
+		i++
 	}
+	sort.Slice(chunksSorted, func(i, j int) bool {
+		return chunksSorted[i].GetOffset() < chunksSorted[j].GetOffset()
+	})
+	for _, chunk := range chunksSorted {
+		partsNames = append(partsNames, chunk.GetName())
+	}
+	return partsNames
+}
+
+func (pc *PartsComposer) process(metaInfo dto.UploaderStartResult) {
+	partsNames := pc.getChunksSlice(metaInfo)
 	_, err := pc.storage.ComposeFileParts(
 		metaInfo.GetUUID(),
 		partsNames,
