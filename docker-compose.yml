@@ -5,10 +5,10 @@ networks:
     name: filup-local-net
 
 volumes:
-  data1-1:
-  data1-2:
-  data2-1:
-  data2-2:
+  odata1-1:
+  odata1-2:
+  odata2-1:
+  odata2-2:
   portainer_data:
 
 x-volume-localtime: &volume-localtime
@@ -24,7 +24,7 @@ x-default-service: &default-service
 
 x-minio-common: &minio-common
   <<: *default-service
-  image: minio/minio
+  image: minio/minio:RELEASE.2022-02-17T23-22-26Z
   command: server --console-address ":9001" http://minio{1...2}/data{1...2}
   expose:
     - "9000"
@@ -43,15 +43,15 @@ services:
     <<: *minio-common
     hostname: minio1
     volumes:
-      - data1-1:/data1
-      - data1-2:/data2
+      - odata1-1:/data1
+      - odata1-2:/data2
 
   minio2:
     <<: *minio-common
     hostname: minio2
     volumes:
-      - data2-1:/data1
-      - data2-2:/data2
+      - odata2-1:/data1
+      - odata2-2:/data2
 
   minio:
     <<: *default-service
