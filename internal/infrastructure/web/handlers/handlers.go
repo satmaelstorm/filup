@@ -134,9 +134,9 @@ func (h *Handlers) getBaseError(err error) error {
 func (h *Handlers) getBaseErrorCodeAndMsg(err error, defCode int, defMsg string) (int, string) {
 	baseError := h.getBaseError(err)
 	if baseError != nil {
-		switch baseError.(type) {
+		switch baseError := baseError.(type) {
 		case minio.ErrorResponse:
-			return baseError.(minio.ErrorResponse).StatusCode, baseError.(minio.ErrorResponse).Message
+			return baseError.StatusCode, baseError.Message
 		}
 	}
 	return defCode, defMsg

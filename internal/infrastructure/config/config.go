@@ -170,27 +170,20 @@ func (u Uploader) AfterLoad() Uploader {
 
 	u.httpTimeout = time.Duration(u.HttpTimeout) * time.Second
 
-	var err error
-	if u.CallbackBefore != "" {
-		u.parsedCallbackBefore, err = url.Parse(u.CallbackBefore)
-		if err != nil {
-			panic("error in Uploader.AfterLoad() while parse CallbackBefore: " + err.Error())
-		}
-	}
-
-	if u.CallbackAfter != "" {
-		u.parsedCallbackAfter, err = url.Parse(u.CallbackAfter)
-		if err != nil {
-			panic("error in Uploader.AfterLoad() while parse CallbackAfter: " + err.Error())
-		}
-	}
-
-	if u.CallbackDownload != "" {
-		u.parsedCallbackDownload, err = url.Parse(u.CallbackDownload)
-		if err != nil {
-			panic("error in Uploader.AfterLoad() while parse CallbackDownload: " + err.Error())
-		}
-	}
+	u.parsedCallbackBefore = u.setParsedUrl(u.CallbackBefore)
+	u.parsedCallbackAfter = u.setParsedUrl(u.CallbackAfter)
+	u.parsedCallbackDownload = u.setParsedUrl(u.CallbackDownload)
 
 	return u
+}
+
+func (u Uploader) setParsedUrl(in string) *url.URL {
+	if "" == in {
+		return nil
+	}
+	result, err := url.Parse(in)
+	if err != nil {
+		panic("error while parsing url " + in + " : " + err.Error())
+	}
+	return result
 }

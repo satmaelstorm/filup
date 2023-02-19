@@ -1,0 +1,13 @@
+{
+    "configurations": [
+        {
+            "type": "go",
+            "name": "Filup server",
+            "goExecPath": "go",
+            "buildParams": [
+                "$PROJECT_DIR$/main.go"
+            ],
+            "runParams": ["server"],
+        },
+    ]
+}

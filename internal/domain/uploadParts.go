@@ -47,11 +47,11 @@ func (up *UploadParts) Handle(filename string, size int64, file io.ReadCloser) (
 		return false, err
 	}
 
-	if err := up.checkPart(filename, size, metaInfo); err != nil {
+	if err = up.checkPart(filename, size, metaInfo); err != nil {
 		return false, err
 	}
 
-	if err := up.savePart(filename, size, file); err != nil {
+	if err = up.savePart(filename, size, file); err != nil {
 		return false, err
 	}
 
@@ -125,7 +125,7 @@ func (up *UploadParts) checkAllParts(metaInfo dto.UploaderStartResult) (bool, er
 	}
 	parts := metaInfo.GetChunks()
 	foundParts := 0
-	for partName, _ := range parts {
+	for partName := range parts {
 		if _, ok := mapList[partName]; ok {
 			foundParts += 1
 		}
