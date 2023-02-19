@@ -7,7 +7,7 @@
             "buildParams": [
                 "$PROJECT_DIR$/main.go"
             ],
-            "runParams": ["server"],
-        },
+            "runParams": ["server"]
+        }
     ]
 }
